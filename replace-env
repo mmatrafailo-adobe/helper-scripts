@@ -1,0 +1,232 @@
+#!/usr/bin/env php
+<?php
+
+$path = getcwd();
+echo $path;
+$envPath = $path . '/app/etc/env.php';
+$autobackupPath = $envPath . '.autobackup';
+if (!is_file($envPath)) {
+    echo "\r\n";
+    die('Incorrect run directory, it should be home magento directory. Unable to locate env.php ' . $envPath . "\r\n");
+}
+
+if (is_file($autobackupPath)) {
+    echo "\r\n";
+    die('Autobackup already exists! I can\'t run ' . $autobackupPath . "\r\n");
+}
+
+copy($envPath, $autobackupPath);
+$config = include $envPath;
+
+class ConfigPatcher
+{
+    /**
+     * @var array
+     */
+    private $config;
+
+    public function __construct(array $config) {
+
+        $this->config = $config;
+    }
+
+    public function exists($path) {
+        $keys = explode('.', $path);
+
+        $current = $this->config;
+        foreach ($keys as $key) {
+
+            if (!array_key_exists($key, $current)) {
+                return false;
+            }
+
+            $current = $current[$key];
+        }
+
+        return true;
+    }
+
+    public function replaceIfExists($path, $replacement)
+    {
+//        if (!$this->exists($path)) {
+//            return false;
+//        }
+
+        $keys = explode('.', $path);
+        $current = &$this->config;
+        foreach ($keys as $key) {
+
+            if (!array_key_exists($key, $current)) {
+                return false;
+            }
+
+            $current = &$current[$key];
+        }
+
+        if (is_array($replacement)) {
+            foreach ($replacement as $key => $value) {
+                $current[$key] = $value;
+            }
+        } else {
+            $current = $replacement;
+        }
+
+//        if (is_array($replacement)) {
+//            foreach ($replacement as $key => $value) {
+//                $this->replaceIfExists($path . '.' . $key, $value);
+//            }
+//        } else {
+//            $keys = explode('.', $path);
+//
+//            $current = &$this->config;
+//            foreach ($keys as $key) {
+//
+//                if (!array_key_exists($key, $current)) {
+//                    return false;
+//                }
+//
+//                $current = &$current[$key];
+//            }
+//            $current = $replacement;
+//        }
+
+        return true;
+    }
+
+    public function getConfigArray(): array
+    {
+        return $this->config;
+    }
+
+    public function remove($path) {
+
+    }
+}
+
+function exists($key, $array) {
+    $key = explode('.', $key);
+
+    $current = $array;
+    foreach ($key as $part) {
+
+        if (!array_key_exists($part, $current)) {
+            return false;
+        }
+
+        $current = $current[$part];
+    }
+
+    return true;
+}
+
+function varexport($expression, $return=FALSE) {
+    $export = var_export($expression, TRUE);
+    $patterns = [
+        "/array \(/" => '[',
+        "/^([ ]*)\)(,?)$/m" => '$1]$2',
+        "/=>[ ]?\n[ ]+\[/" => '=> [',
+        "/([ ]*)(\'[^\']+\') => ([\[\'])/" => '$1$2 => $3',
+    ];
+    $export = preg_replace(array_keys($patterns), array_values($patterns), $export);
+    if ((bool)$return) return $export; else echo $export;
+}
+
+
+$configPatcher = new ConfigPatcher($config);
+$configPatcher->replaceIfExists('backend.frontName', 'admin');
+//
+//if (exists('backend.frontName', $config)) {
+//    $config['backend']['frontName'] = 'admin';
+//}
+
+$db = [
+    'host' => 'db',
+    'username' => 'magento',
+    'dbname' => 'magento',
+    'password' => 'magento',
+];
+
+
+$configPatcher->replaceIfExists('db.connection.default', $db);
+$configPatcher->replaceIfExists('db.connection.indexer', $db);
+//
+//if (exists('db.connection.default', $config)) {
+//    foreach ($db as $key => $value) {
+//        $config['db']['connection']['default'][$key] = $value;
+//    }
+//}
+//
+//if (exists('db.connection.default', $config)) {
+//    foreach ($db as $key => $value) {
+//        $config['db']['connection']['default'][$key] = $value;
+//    }
+//}
+
+//if (exists('db.connection.indexer', $config)) {
+//    foreach ($db as $key => $value) {
+//        $config['db']['connection']['indexer'][$key] = $value;
+//    }
+//}
+
+$configPatcher->replaceIfExists('queue.amqp', [
+    'host' => 'rabbitmq',
+    'port' => '5672',
+    'user' => 'guest',
+    'password' => 'guest'
+]);
+//if (exists('queue.amqp', $config)) {
+//    $config['queue']['amqp']['host'] = 'rabbitmq';
+//    $config['queue']['amqp']['port'] = '5672';
+//    $config['queue']['amqp']['user'] = 'guest';
+//    $config['queue']['amqp']['password'] = 'guest';
+//
+//}
+$configPatcher->replaceIfExists(
+        'lock.config.path',
+    '/var/www/html/' . ltrim($config['lock']['config']['path'] ?? '', '/')
+);
+
+$redisSettings = [
+        'server' => 'redis',
+    'port' => '6379'
+];
+//  'cache' => [
+//    'frontend' => [
+//      'default' => [
+//        'backend' => '\\Magento\\Framework\\Cache\\Backend\\RemoteSynchronizedCache',
+//        'backend_options' => [
+//          'remote_backend' => '\\Magento\\Framework\\Cache\\Backend\\Redis',
+//          'remote_backend_options' => [
+//              'server' => 'redis',
+//              'port' => '6379',
+if ($configPatcher->exists('cache.frontend.default.backend_options.remote_backend_options')) {
+    $configPatcher->replaceIfExists('cache.frontend.default.backend_options.remote_backend_options', $redisSettings);
+} else {
+    $configPatcher->replaceIfExists('cache.frontend.default.backend_options', $redisSettings);
+}
+$configPatcher->replaceIfExists('cache.frontend.page_cache.backend_options', $redisSettings);
+
+$configPatcher->replaceIfExists('system.default.smile_elasticsuite_core_base_settings.es_client.servers', 'elasticsearch:9200');
+
+$configPatcher->replaceIfExists('system.default.catalog.search.elasticsearch7_server_hostname', 'elasticsearch');
+
+
+$config = $configPatcher->getConfigArray();
+
+if (exists('session.save', $config) && $config['session']['save'] === 'redis') {
+    $config['session']['redis']['host'] = 'redis';
+    $config['session']['redis']['port'] = '6379';
+}
+
+
+//if (exists('lock.config.path', $config)) {
+//    $config['lock']['config']['path'] = '/var/www/html/' . ltrim($config['lock']['config']['path'], '/');
+//}
+
+//if (exists('.cache.frontend.default', $config) && )
+
+unset($config['db']['slave_connection']);
+unset($config['cache']['frontend']['default']['backend_options']['remote_backend_options']['load_from_slave']);
+
+file_put_contents($envPath, "<?php\r\nreturn " . varexport($config, true) . ';');
+

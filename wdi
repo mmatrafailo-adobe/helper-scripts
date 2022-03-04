@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+CURRENT_DIR_NAME=$(basename "$(pwd)")
+warden env-init ${CURRENT_DIR_NAME} magento2
+warden sign-certificate ${CURRENT_DIR_NAME}.test
+mkdir .idea
+UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+cat  << EOF > .idea/dataSources.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="magento@${CURRENT_DIR_NAME}-db-1" uuid="${UUID}">
+      <driver-ref>mariadb</driver-ref>
+      <synchronize>true</synchronize>
+      <user-name>magento</user-name>
+      <jdbc-driver>org.mariadb.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mariadb://${CURRENT_DIR_NAME}-db-1:3306/magento</jdbc-url>
+      <working-dir>\$ProjectFileDir\$</working-dir>
+      <ssh-properties>
+              <enabled>true</enabled>
+              <ssh-config-id>2a7205b3-f1f8-4185-9dd7-5e27e48f11f1</ssh-config-id>
+            </ssh-properties>
+    </data-source>
+  </component>
+</project>
+EOF
+
+# warden env up
+# sudo echo "127.0.0.1 app.${CURRENT_DIR_NAME}.test" >> /etc/hosts
