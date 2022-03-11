@@ -226,7 +226,10 @@ if (exists('session.save', $config) && $config['session']['save'] === 'redis') {
 //if (exists('.cache.frontend.default', $config) && )
 
 unset($config['db']['slave_connection']);
+unset($config['cache']['frontend']['default']['backend_options']['load_from_slave']);
+unset($config['cache']['frontend']['page_cache']['backend_options']['load_from_slave']);
 unset($config['cache']['frontend']['default']['backend_options']['remote_backend_options']['load_from_slave']);
+unset($config['cache']['frontend']['page_cache']['backend_options']['remote_backend_options']['load_from_slave']);
 
 file_put_contents($envPath, "<?php\r\nreturn " . varexport($config, true) . ';');
 
