@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-ENV_NAME=$1
-echo "removing ${ENV_NAME}"
-docker volume rm ${ENV_NAME}_appdata ${ENV_NAME}_bashhistory ${ENV_NAME}_dbdata ${ENV_NAME}_esdata ${ENV_NAME}_rabbitmq ${ENV_NAME}_redis ${ENV_NAME}_sshdirectory
-docker image rm ${ENV_NAME}_php-fpm
-rm -rf ${ENV_NAME}

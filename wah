@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-CURRENT_DIR_NAME=$(basename "$(pwd)")
-echo "127.0.0.1 app.${CURRENT_DIR_NAME}.test" >> /etc/hosts
