@@ -7,8 +7,6 @@ else
   PROJECT_NAME=$(1)
 fi
 
-
-
 if [ -z "$2" ]
 then
       read -p 'Enter cloud project ID: ' CLOUD_PROJECT_ID
@@ -19,7 +17,7 @@ fi
 PROJECT_NAME="${PROJECT_NAME//-/}"
 PROJECT_NAME=$(echo "$PROJECT_NAME" |  tr '[:upper:]' '[:lower:]' )
 
-if [ -z "${PROJECT_NAME}"]
+if [ -z "${PROJECT_NAME}" ]
 then
   PROJECT_NAME=$(basename "$(pwd)")
 else
@@ -118,6 +116,9 @@ fi
 echo "Replacing app/etc/env.php"
 replace-env
 
+warden env exec -T php-fpm composer config allow-plugins.laminas/laminas-dependency-plugin true
+warden env exec -T php-fpm composer config allow-plugins.magento/magento-composer-installer true
+warden env exec -T php-fpm composer config allow-plugins.magento/inventory-composer-installer true
 warden env exec -T php-fpm composer dump-autoload
 warden env exec -T php-fpm php bin/magento d:m:set developer
 warden env exec -T php-fpm php bin/magento a:c:i
@@ -126,7 +127,9 @@ warden env exec -T php-fpm php bin/magento ca:f
 warden env exec -T php-fpm php bin/magento admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
 warden env exec -T php-fpm php bin/magento mo:di Magento_TwoFactorAuth
 
-
+# "magento/magento-composer-installer": true,
+#            "laminas/laminas-dependency-plugin": true,
+#            "magento/inventory-composer-installer": true
 
 
 echo "https://app.${PROJECT_NAME}.test/"

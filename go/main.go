@@ -142,7 +142,7 @@ func main() {
 
 		cmd := exec.Command("warden", "env", "down")
 		cmd.Dir = env.FullPath
-		out, err := cmd.Output()
+		out, err := cmd.CombinedOutput()
 		if err != nil {
 			fmt.Fprintf(w, "ERROR on server")
 		} else {
@@ -169,7 +169,7 @@ func main() {
 
 		cmd := exec.Command("warden", "env", "up")
 		cmd.Dir = env.FullPath
-		out, err := cmd.Output()
+		out, err := cmd.CombinedOutput()
 		if err != nil {
 			fmt.Fprintf(w, "ERROR on server")
 		} else {
@@ -199,7 +199,7 @@ func main() {
 
 		cmd := exec.Command("warden-remove", name)
 		cmd.Dir = dirForClientDumps
-		out, err := cmd.Output()
+		out, err := cmd.CombinedOutput()
 		if err != nil {
 			fmt.Fprintf(w, "ERROR on server")
 		} else {

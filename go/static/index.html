@@ -61,7 +61,7 @@
         // adds entry to the html #console
         function log(txt){
             var newLine = document.createElement("li");
-            str = str.replace(/(?:\r\n|\r|\n)/g, '<br>');
+            txt = txt.replace(/(?:\r\n|\r|\n)/g, '<br>');
             newLine.innerHTML = (typeof txt === 'string') ? txt : JSON.stringify(txt, null, 4);
             document.querySelector('#console').appendChild(newLine);
         }
