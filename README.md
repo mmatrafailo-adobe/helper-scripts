@@ -9,3 +9,20 @@ sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/replace-env /usr/local/bin/
 sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/warden-remove /usr/local/bin/warden-remove
 
 ```
+
+4. Add ssh tunnel connection https://docs.warden.dev/configuration/database.html, 
+5. Find file /Users/{Username}/Library/Application Support/JetBrains/PhpStorm{Version}/options/sshConfigs.xml
+```xml
+<application>
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="OPEN_SSH" host="tunnel.warden.test" id="2a7205b3-f1f8-4185-9dd7-5e27e48f11f1" port="2222" nameFormat="DESCRIPTIVE" username="user" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</application>
+```
+6. Copy that id to bin/wdi, replacing this value:
+```xml
+   <ssh-config-id>2a7205b3-f1f8-4185-9dd7-5e27e48f11f1</ssh-config-id>
+```
+You need to copy that id and paste into bin/wdi to have automatically configured db on new instances
