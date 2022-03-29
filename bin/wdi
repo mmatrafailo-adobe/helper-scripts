@@ -4,14 +4,18 @@ if [ -z "$1" ]
 then
       read -p 'Enter JIRA ticket number (empty for using current folder): ' PROJECT_NAME
 else
-  PROJECT_NAME=$(1)
+  PROJECT_NAME=$1
+
+  echo "Project name is: ${PROJECT_NAME}"
 fi
 
 if [ -z "$2" ]
 then
       read -p 'Enter cloud project ID: ' CLOUD_PROJECT_ID
 else
-  CLOUD_PROJECT_ID=$(2)
+  CLOUD_PROJECT_ID=$2
+
+  echo "Cloud project ID  is: ${CLOUD_PROJECT_ID} $(2)"
 fi
 
 PROJECT_NAME="${PROJECT_NAME//-/}"
