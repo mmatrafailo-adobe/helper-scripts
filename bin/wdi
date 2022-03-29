@@ -35,12 +35,12 @@ cat  << EOF > .idea/dataSources.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="magento@${PROJECT_NAME}-db-1" uuid="${UUID}">
+    <data-source source="LOCAL" name="magento@${PROJECT_NAME}_db_1" uuid="${UUID}">
       <driver-ref>mariadb</driver-ref>
       <synchronize>true</synchronize>
       <user-name>magento</user-name>
       <jdbc-driver>org.mariadb.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mariadb://${PROJECT_NAME}-db-1:3306/magento</jdbc-url>
+      <jdbc-url>jdbc:mariadb://${PROJECT_NAME}_db_1:3306/magento</jdbc-url>
       <working-dir>\$ProjectFileDir\$</working-dir>
       <ssh-properties>
               <enabled>true</enabled>
@@ -57,9 +57,9 @@ cat  << EOF > .idea/workspace.xml
 <project version="4">
   <component name="PhpServers">
       <servers>
-        <server host="${PROJECT_NAME}-docker" id="${UUID}" name="${PROJECT_NAME}-docker-docker" use_path_mappings="true">
+        <server host="${PROJECT_NAME}-docker" id="${UUID}" name="${PROJECT_NAME}-docker" use_path_mappings="true">
           <path_mappings>
-            <mapping local-root="$PROJECT_DIR$" remote-root="/var/www/html" />
+            <mapping local-root="\$PROJECT_DIR\$" remote-root="/var/www/html" />
           </path_mappings>
         </server>
       </servers>

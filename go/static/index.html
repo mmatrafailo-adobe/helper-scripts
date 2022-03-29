@@ -15,7 +15,8 @@
 
     <div class="row">
         <div class="mb-3">
-            <label for="name" class="form-label">Ticket number (will be env name and folder name like "mdva1234")</label>
+            <label for="name" class="form-label">Ticket number (will be env name and folder name like
+                "mdva1234")</label>
             <input type="text" class="form-control" id="name" placeholder="MDVA-1234">
         </div>
         <div class="mb-3">
@@ -49,6 +50,7 @@
         line-height: 25px;
         padding-left: 5px;
     }
+
     ul#console li {
         border-bottom: solid 1px #80808038;
     }
@@ -57,15 +59,15 @@
     <ul id="console"></ul>
 </div>
 
-    <script>
-        // adds entry to the html #console
-        function log(txt){
-            var newLine = document.createElement("li");
-            txt = txt.replace(/(?:\r\n|\r|\n)/g, '<br>');
-            newLine.innerHTML = (typeof txt === 'string') ? txt : JSON.stringify(txt, null, 4);
-            document.querySelector('#console').appendChild(newLine);
-        }
-    </script>
+<script>
+    // adds entry to the html #console
+    function log(txt) {
+        var newLine = document.createElement("li");
+        txt = txt.replace(/(?:\r\n|\r|\n)/g, '<br>');
+        newLine.innerHTML = (typeof txt === 'string') ? txt : JSON.stringify(txt, null, 4);
+        document.querySelector('#console').appendChild(newLine);
+    }
+</script>
 <!-- Optional JavaScript; choose one of the two! -->
 
 <!-- Option 1: Bootstrap Bundle with Popper -->
@@ -89,7 +91,7 @@
                 project_id: projectIdField.value,
             },
             context: document.body
-        }).done(function(response) {
+        }).done(function (response) {
             alert(response);
             log(response);
             loadItems();
@@ -105,7 +107,7 @@
     }
 
     function start(button, name) {
-        $(button).prop("disabled",true);
+        $(button).prop("disabled", true);
         $(button).text("Starting...");
         $.ajax({
             url: "/start",
@@ -113,19 +115,19 @@
                 name: name
             },
             context: document.body
-        }).done(function(response) {
+        }).done(function (response) {
             alert(response);
             log(response);
             loadItems();
         });
     }
 
-    function stop (button, name) {
+    function stop(button, name) {
         if (!confirm("Stop the " + name + "env?")) {
             return;
         }
 
-        $(button).prop("disabled",true);
+        $(button).prop("disabled", true);
         $(button).text("Stopping...");
         $.ajax({
             url: "/stop",
@@ -133,7 +135,7 @@
                 name: name
             },
             context: document.body
-        }).done(function(response) {
+        }).done(function (response) {
             alert(response);
             log(response);
             loadItems();
@@ -145,7 +147,7 @@
             return
         }
 
-        $(button).prop("disabled",true);
+        $(button).prop("disabled", true);
         $(button).text("Removing...");
         $.ajax({
             url: "/remove",
@@ -153,7 +155,7 @@
                 name: name
             },
             context: document.body
-        }).done(function(response) {
+        }).done(function (response) {
             alert(response);
             log(response);
             loadItems();
@@ -166,20 +168,30 @@
             let actions = "<div class=\"btn-group\" role=\"group\" aria-label=\"Basic example\">";
             if (val.containerUrl) {
                 if (val.isRunning) {
-                    actions += "<button type=\"button\" class=\"btn btn-warning\" onclick=\"stop(this, '"+val.name+"');\">STOP</button>";
+                    actions += "<button type=\"button\" class=\"btn btn-warning\" onclick=\"stop(this, '" + val.name + "');\">STOP</button>";
                 } else {
-                    actions += "<button type=\"button\" class=\"btn btn-success\" onclick=\"start(this, '"+val.name+"');\">Start</button>";
+                    actions += "<button type=\"button\" class=\"btn btn-success\" onclick=\"start(this, '" + val.name + "');\">Start</button>";
                 }
             }
 
-            actions += "<button type=\"button\" class=\"btn btn-danger\" onclick=\"remove(this, '"+val.name+"');\">Remove</button>";
+            actions += "<button type=\"button\" class=\"btn btn-danger\" onclick=\"remove(this, '" + val.name + "');\">Remove</button>";
             actions += "</div>";
-            htmlItems.push("<tr><td >" + val.name + "</td>\n" +
-                "        <td >" + val.time + "</td>\n" +
-                "        <td ><a href='" + val.containerUrl + "'>" + val.containerUrl + "</a></td>\n" +
-                "        <td ><a href='" + val.jiraUrl + "'>" + val.jiraUrl + "</a></td>" +
-                "        <td >" + actions + "</td>" +
-                "</tr>");
+
+            let columns = [];
+            columns.push("<td >" + val.name + "</td>");
+            columns.push("<td >" + val.time + "</td>");
+            if (val.containerUrl) {
+
+                columns.push("<td ><a href='" + val.containerUrl + "' target='_blank'>" + val.containerUrl + "</a>" +
+                    "<br/> <a href='" + val.containerUrl + "admin/' target='_blank'>" + val.containerUrl + "admin/</a>" +
+                    "</td>");
+            } else {
+                columns.push("<td></td>");
+            }
+            columns.push("<td><a href='" + val.jiraUrl + "' target='_blank'>" + val.jiraUrl + "</a></td>");
+            columns.push("<td >" + actions + "</td>")
+
+            htmlItems.push("<tr>" + columns.join("\n") + "</tr>");
         });
         $("#list-envs").html(htmlItems.join(""));
     }
