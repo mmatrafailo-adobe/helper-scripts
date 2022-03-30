@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+SOURCE=${BASH_SOURCE[0]}
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+  SOURCE=$(readlink "$SOURCE")
+  [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+
 if [ -z "$1" ]
 then
       read -p 'Enter JIRA ticket number (empty for using current folder): ' PROJECT_NAME
@@ -120,25 +128,25 @@ fi
 echo "Replacing app/etc/env.php"
 replace-env
 
-warden env exec -T php-fpm composer config allow-plugins.laminas/laminas-dependency-plugin true
-warden env exec -T php-fpm composer config allow-plugins.magento/magento-composer-installer true
-warden env exec -T php-fpm composer config allow-plugins.magento/inventory-composer-installer true
+echo "Replacing db configs"
+cp ${DIR}/replace-config.php ./
+warden env exec -T php-fpm php replace-config.php
+
+echo "configuring composer"
+warden env exec -T php-fpm composer config --no-plugins allow-plugins.laminas/laminas-dependency-plugin true
+warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/magento-composer-installer true
+warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/inventory-composer-installer true
+
+echo "Run dump autoload"
 warden env exec -T php-fpm composer dump-autoload
-warden env exec -T php-fpm php bin/magento d:m:set developer
+warden env exec -T php-fpm php bin/magento deploy:mode:set developer
 warden env exec -T php-fpm php bin/magento a:c:i
-warden env exec -T php-fpm php bin/magento ca:f
 warden env exec -T php-fpm php bin/magento ca:f
 warden env exec -T php-fpm php bin/magento admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
 warden env exec -T php-fpm php bin/magento mo:di Magento_TwoFactorAuth
-
-# "magento/magento-composer-installer": true,
-#            "laminas/laminas-dependency-plugin": true,
-#            "magento/inventory-composer-installer": true
 
 
 echo "https://app.${PROJECT_NAME}.test/"
 
 echo "RUN: cd ${PROJECT_NAME} && sudo wah to add host to /etc/hosts"
 
-#echo "Add host into hosts file"
-#echo "127.0.0.1 app.${PROJECT_NAME}.test" >> /etc/hosts
