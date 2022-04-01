@@ -172,7 +172,8 @@ $configPatcher->replaceIfExists('queue.amqp', [
     'host' => 'rabbitmq',
     'port' => '5672',
     'user' => 'guest',
-    'password' => 'guest'
+    'password' => 'guest',
+    'virtualhost' => '/'
 ]);
 //if (exists('queue.amqp', $config)) {
 //    $config['queue']['amqp']['host'] = 'rabbitmq';
