@@ -231,5 +231,11 @@ unset($config['cache']['frontend']['page_cache']['backend_options']['load_from_s
 unset($config['cache']['frontend']['default']['backend_options']['remote_backend_options']['load_from_slave']);
 unset($config['cache']['frontend']['page_cache']['backend_options']['remote_backend_options']['load_from_slave']);
 
+//$config['http_cache_hosts'] = [
+//    [
+//      'host' => 'varnish',
+//      'port' => '80'
+//    ]
+//];
 file_put_contents($envPath, "<?php\r\nreturn " . varexport($config, true) . ';');
 

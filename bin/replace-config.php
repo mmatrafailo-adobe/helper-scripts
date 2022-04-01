@@ -14,6 +14,7 @@ $domainPatches = [
     'web/unsecure/base_static_url',
     'web/secure/base_static_url',
     'web/cookie/cookie_domain',
+    'admin/url/custom',
 ];
 $patchWhere = implode(',', array_map(static function($value) {return "'{$value}'";}, $domainPatches));
 
@@ -34,7 +35,7 @@ $uniqueDomains = [];
 $updates = [];
 foreach ($configs as $config) {
     $domain = getDomain($config['value']);
-    if (!$domain) {
+    if (!$domain || strpos($domain, '{{') === 0) {
         continue;
     }
 

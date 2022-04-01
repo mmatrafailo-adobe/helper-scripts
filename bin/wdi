@@ -111,6 +111,8 @@ then
   fi
 fi
 
+cp ${SCRIPT_DIR}/replace-config.php ./
+
 warden env up
 
 if [ -n "${CODE_FILE}" ]
@@ -129,7 +131,6 @@ echo "Replacing app/etc/env.php"
 replace-env
 
 echo "Replacing db configs"
-cp ${DIR}/replace-config.php ./
 warden env exec -T php-fpm php replace-config.php
 
 echo "configuring composer"
@@ -143,7 +144,7 @@ warden env exec -T php-fpm php bin/magento deploy:mode:set developer
 warden env exec -T php-fpm php bin/magento a:c:i
 warden env exec -T php-fpm php bin/magento ca:f
 warden env exec -T php-fpm php bin/magento admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
-warden env exec -T php-fpm php bin/magento mo:di Magento_TwoFactorAuth
+# warden env exec -T php-fpm php bin/magento mo:di Magento_TwoFactorAuth
 
 
 echo "https://app.${PROJECT_NAME}.test/"
