@@ -97,7 +97,7 @@ if ($magentoVarsContent) {
 
 echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
 $domains = implode(" ", $uniqueDomains);
-echo 'sudo echo "127.0.0.1 '. $domains . '" >> /etc/hosts'
+echo 'sudo echo "127.0.0.1 '. $domains . '" >> /etc/hosts';
 echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
 
 
