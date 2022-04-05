@@ -144,7 +144,7 @@ warden env exec -T php-fpm php bin/magento deploy:mode:set developer
 warden env exec -T php-fpm php bin/magento a:c:i
 warden env exec -T php-fpm php bin/magento ca:f
 warden env exec -T php-fpm php bin/magento admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
-# warden env exec -T php-fpm php bin/magento mo:di Magento_TwoFactorAuth
+warden env exec -T php-fpm php bin/magento mo:di Magento_TwoFactorAuth
 
 
 echo "https://app.${PROJECT_NAME}.test/"
