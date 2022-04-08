@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-composer dump-autoload
-m d:m:set developer
-m a:c:i
-m ca:f
-m admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
-m mo:di Magento_TwoFactorAuth

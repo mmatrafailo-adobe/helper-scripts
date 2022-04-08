@@ -73,12 +73,6 @@ func createFolderAndInitProject(dir string, projectName string, jiraTicketUrl st
 	close(msg)
 }
 
-func downloadCodeDumps(dir string, sshUrl string, msg chan string) {
-
-	runCommandWithChannel("cloud-teleport  "+sshUrl+" dump -d code", dir, msg)
-	close(msg)
-}
-
 func makeIdeaFolder(dir string, projectName string) {
 
 	ideaFolderPath := dir + "/.idea"
@@ -180,7 +174,8 @@ func main() {
 	var projectId string
 	fmt.Scan(&projectId)
 
-	dumpMessagesChan := make(chan string)
+	phpVersion := "74"
+
 	if projectId != "N" {
 		fmt.Println("Project id is " + projectId)
 
@@ -194,9 +189,7 @@ func main() {
 		// ucxdbrjol65si
 		sshPath := runCommand("magento-cloud env:ssh --project " + projectId + " --environment " + envId + " --pipe")
 
-		go downloadCodeDumps(projectDir, sshPath, dumpMessagesChan)
-
-		commandObject := exec.Command("bash", "-c", "cloud-teleport "+sshPath+" dump -d db")
+		commandObject := exec.Command("bash", "-c", "cloud-teleport "+sshPath+" dump")
 		commandObject.Dir = projectDir
 		commandObject.Stdin = os.Stdin
 		commandObject.Stdout = os.Stdout
@@ -207,18 +200,13 @@ func main() {
 			fmt.Println("Error of running db dump command: " + err.Error())
 		}
 
-		fmt.Println(sshPath)
+		//fmt.Println(sshPath)
 	} else {
 		fmt.Println("Project ID is empty, Skipping downloading the dumps")
-		close(dumpMessagesChan)
 	}
 
 	for message := range messages {
 		fmt.Println(message)
-	}
-
-	for dumpMessage := range dumpMessagesChan {
-		fmt.Println(dumpMessage)
 	}
 
 	//c := make(chan int)

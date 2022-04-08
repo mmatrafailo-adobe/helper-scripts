@@ -111,7 +111,7 @@ then
   fi
 fi
 
-cp ${SCRIPT_DIR}/replace-config.php ./
+cp ${SCRIPT_DIR}/replace-scripts.php ./
 
 warden env up
 
@@ -127,20 +127,21 @@ then
   gunzip -c ${DATABASE_FILE} | warden db import
 fi
 
-echo "Replacing app/etc/env.php"
-replace-env
+# echo "Replacing app/etc/env.php"
+# replace-env
 
 echo "configuring composer"
 warden env exec -T php-fpm composer config --no-plugins allow-plugins.laminas/laminas-dependency-plugin true
 warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/magento-composer-installer true
 warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/inventory-composer-installer true
+warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/composer-root-update-plugin true
 
 echo "Run dump autoload"
 warden env exec -T php-fpm composer dump-autoload
 
-
-echo "Replacing db configs"
-warden env exec -T php-fpm php replace-config.php
+# Replacing env.php and db configs
+warden env exec -T php-fpm php replace-scripts.php env
+warden env exec -T php-fpm php replace-scripts.php db
 
 
 warden env exec -T php-fpm php bin/magento deploy:mode:set developer
