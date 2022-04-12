@@ -26,3 +26,8 @@ sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/warden-remove /usr/local/bi
    <ssh-config-id>2a7205b3-f1f8-4185-9dd7-5e27e48f11f1</ssh-config-id>
 ```
 You need to copy that id and paste into bin/wdi to have automatically configured db on new instances
+
+
+=== Known Issues ===
+
+1. 503 Backend fetch failed varnish - disable Magento_Csp (it puts lots of headers)
