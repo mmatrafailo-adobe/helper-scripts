@@ -10,24 +10,8 @@ sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/warden-remove /usr/local/bi
 
 ```
 
-5. Add ssh tunnel connection https://docs.warden.dev/configuration/database.html, 
-6. Find file /Users/{Username}/Library/Application Support/JetBrains/PhpStorm{Version}/options/sshConfigs.xml
-```xml
-<application>
-  <component name="SshConfigs">
-    <configs>
-      <sshConfig authType="OPEN_SSH" host="tunnel.warden.test" id="2a7205b3-f1f8-4185-9dd7-5e27e48f11f1" port="2222" nameFormat="DESCRIPTIVE" username="user" useOpenSSHConfig="true" />
-    </configs>
-  </component>
-</application>
-```
-7. Copy that id to bin/wdi, replacing this value:
-```xml
-   <ssh-config-id>2a7205b3-f1f8-4185-9dd7-5e27e48f11f1</ssh-config-id>
-```
-You need to copy that id and paste into bin/wdi to have automatically configured db on new instances
-
 
 === Known Issues ===
 
 1. 503 Backend fetch failed varnish - disable Magento_Csp (it puts lots of headers)
+2. Endless redirect to self when open admin url: go to pub/index.php and add $_SERVER['HTTPS'] = 'https'; before magento runs

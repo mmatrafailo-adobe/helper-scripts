@@ -42,6 +42,7 @@ echo "Project name is ${PROJECT_NAME}"
 
 mkdir .idea
 UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+SSH_UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 
 cat  << EOF > .idea/dataSources.xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -56,12 +57,47 @@ cat  << EOF > .idea/dataSources.xml
       <working-dir>\$ProjectFileDir\$</working-dir>
       <ssh-properties>
               <enabled>true</enabled>
-              <ssh-config-id>2a7205b3-f1f8-4185-9dd7-5e27e48f11f1</ssh-config-id>
+              <ssh-config-id>${SSH_UUID}</ssh-config-id>
             </ssh-properties>
     </data-source>
   </component>
 </project>
 EOF
+
+cat  << EOF > .idea/sshConfigs.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="OPEN_SSH" host="tunnel.warden.test" id="${SSH_UUID}" port="2222" nameFormat="DESCRIPTIVE" username="user" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
+EOF
+
+cat  << EOF > .idea/${PROJECT_NAME}.iml
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://\$MODULE_DIR\$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
+EOF
+
+cat  << EOF > .idea/modules.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://\$PROJECT_DIR\$/.idea/${PROJECT_NAME}.iml" filepath="\$PROJECT_DIR\$/.idea/${PROJECT_NAME}.iml" />
+    </modules>
+  </component>
+</project>
+EOF
+
+
 
 UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 cat  << EOF > .idea/workspace.xml
