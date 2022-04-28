@@ -114,8 +114,8 @@ SELECT NULL, scope, scope_id, CONCAT(path, '_backup'), value, updated_at FROM co
     echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
     $domains = implode(" ", $uniqueDomains);
 
-    echo 'echo "127.0.0.1 '.$domains.'" | sudo tee -a /etc/hosts';
-    echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
+    echo 'HOSTS_COMMAND=echo "127.0.0.1 '.$domains.'" | sudo tee -a /etc/hosts';
+    echo PHP_EOL . "=========================" . PHP_EOL;
 }
 function replaceConfig($path) {
 
