@@ -1,4 +1,8 @@
 <?php
+
+//var_dump(getDomainsFromEnv(__DIR__));
+//echo PHP_EOL;
+//die;
 $command = $argv[1] ?? null;
 
 if ($command === 'env') {
@@ -11,6 +15,54 @@ if (!$command) {
     die("Command not specified. For replacing app/etc/env.php run php replace-scripts.php env");
 }
 
+function getDomainsFromEnv($path) {
+    $config = include $path . '/app/etc/env.php';
+
+    $configPatcher = new ConfigPatcher($config);
+
+    if (!$configPatcher->exists('system')) {
+        return;
+    }
+
+    $domains = [];
+    if (!empty($config['system']['default']['web']['unsecure']['base_url'])) {
+        $domains[] = getDomain($config['system']['default']['web']['unsecure']['base_url']);
+    }
+
+    if (!empty($config['system']['default']['web']['secure']['base_url'])) {
+        $domains[] = getDomain($config['system']['default']['web']['secure']['base_url']);
+    }
+
+    foreach ($config['system'] as $scope => $scopeConfig) {
+        if ($scope === 'default') {
+            continue;
+        }
+
+        foreach ($scopeConfig as $scopeCode => $scopeValues) {
+            if (!empty($scopeValues['web']['unsecure']['base_url'])) {
+                $domains[] = getDomain($scopeValues['web']['unsecure']['base_url']);
+            }
+
+            if (!empty($scopeValues['web']['secure']['base_url'])) {
+                $domains[] = getDomain($scopeValues['web']['secure']['base_url']);
+            }
+        }
+
+    }
+
+    return array_unique($domains);
+}
+
+function getConfigsFromEnv($path) {
+
+    $config = include $path . '/app/etc/env.php';
+
+    if (empty($config['system'])) {
+        return [];
+    }
+
+
+}
 
 function replaceDb($path) {
 
@@ -48,6 +100,7 @@ function replaceDb($path) {
     $scopes = [];
 
     $uniqueDomains = [];
+
     $updates = [];
     foreach ($configs as $config) {
         $domain = getDomain($config['value']);
@@ -97,12 +150,15 @@ SELECT NULL, scope, scope_id, CONCAT(path, '_backup'), value, updated_at FROM co
         echo "Found magento-vars.php file" . PHP_EOL;
         $magentoVarsContent = file_get_contents(__DIR__ . '/magento-vars.php');
     }
+
+    $envContent = file_get_contents($path . '/app/etc/env.php');
     echo "Domains found and replaced" . PHP_EOL;
 
     printTable($uniqueDomains, ["Domain", "Replacement"]);
     foreach ($uniqueDomains as $domain => $replacement) {
         $db->query("UPDATE core_config_data SET value = REPLACE(value, '{$domain}', '{$replacement}') WHERE path IN({$patchWhere})");
         $magentoVarsContent = str_replace($domain, $replacement, $magentoVarsContent);
+        $envContent = str_replace($domain, $replacement, $magentoVarsContent);
     }
 
     if ($magentoVarsContent) {
@@ -293,6 +349,10 @@ class ConfigPatcher
     public function getConfigArray(): array
     {
         return $this->config;
+    }
+
+    public function get($path) {
+
     }
 
     public function remove($path) {
