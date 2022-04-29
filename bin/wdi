@@ -7,45 +7,18 @@ convertsecs() {
  printf "%02d:%02d:%02d\n" $h $m $s
 }
 
-START_TIME_OF_EXECUTION=`date +%s`
-SOURCE=${BASH_SOURCE[0]}
-while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-  DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
-  SOURCE=$(readlink "$SOURCE")
-  [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
-done
-SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+getSourceDirOfScript () {
+  local SOURCE=${BASH_SOURCE[0]}
+  while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+    DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+    SOURCE=$(readlink "$SOURCE")
+    [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+  done
+  local SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 
-if [ -z "$1" ]
-then
-      read -p 'Enter JIRA ticket number (empty for using current folder): ' PROJECT_NAME
-else
-  PROJECT_NAME=$1
+  echo $SCRIPT_DIR
+}
 
-  echo "Project name is: ${PROJECT_NAME}"
-fi
-
-if [ -z "$2" ]
-then
-      read -p 'Enter cloud project ID: ' CLOUD_PROJECT_ID
-else
-  CLOUD_PROJECT_ID=$2
-
-  echo "Cloud project ID  is: ${CLOUD_PROJECT_ID}"
-fi
-
-PROJECT_NAME="${PROJECT_NAME//-/}"
-PROJECT_NAME=$(echo "$PROJECT_NAME" |  tr '[:upper:]' '[:lower:]' )
-
-if [ -z "${PROJECT_NAME}" ]
-then
-  PROJECT_NAME=$(basename "$(pwd)")
-else
-  mkdir ${PROJECT_NAME}
-  cd $_
-fi
-
-echo "Project name is ${PROJECT_NAME}"
 
 make_phpstorm_dir () {
   mkdir .idea
@@ -134,22 +107,76 @@ init_project () {
   make_phpstorm_dir
   varden_init_env
   cp ${SCRIPT_DIR}/replace-scripts.php ./
+
+  local PHP_VERSION=${1}
+  if [ "${PHP_VERSION}" != "7.4" ]
+  then
+      sed -i '' 's/PHP_VERSION=7.4/PHP_VERSION=7.3/g' .env
+  fi
+
 }
 
+START_TIME_OF_EXECUTION=`date +%s`
 
+SCRIPT_DIR=$(getSourceDirOfScript)
+
+
+
+if [ -z "$1" ]
+then
+      read -p 'Enter JIRA ticket number (empty for using current folder): ' PROJECT_NAME
+else
+  PROJECT_NAME=$1
+
+  echo "Project name is: ${PROJECT_NAME}"
+fi
+
+if [ -z "$2" ]
+then
+      read -p 'Enter cloud project ID: ' CLOUD_PROJECT_ID
+else
+  CLOUD_PROJECT_ID=$2
+
+  echo "Cloud project ID  is: ${CLOUD_PROJECT_ID}"
+fi
+
+if [ -z "$3" ]
+then
+      magento-cloud env:list -p ${CLOUD_PROJECT_ID} -I --format plain --pipe
+      read -p 'Enter environment ID: ' CLOUD_ENV_ID
+else
+  CLOUD_ENV_ID=$3
+
+  echo "Cloud environment ID  is: ${CLOUD_ENV_ID}"
+fi
+
+PROJECT_NAME="${PROJECT_NAME//-/}"
+PROJECT_NAME=$(echo "$PROJECT_NAME" |  tr '[:upper:]' '[:lower:]' )
+
+if [ -z "${PROJECT_NAME}" ]
+then
+  PROJECT_NAME=$(basename "$(pwd)")
+else
+  mkdir ${PROJECT_NAME}
+  cd $_
+fi
+
+echo "Project name is ${PROJECT_NAME}"
 
 if [ -z "$CLOUD_PROJECT_ID" ]
 then
       echo "project id not specified"
 else
-      SSH_HOST=`eval magento-cloud environment:ssh --all --project $CLOUD_PROJECT_ID`
+      SSH_HOST=`eval magento-cloud environment:ssh --all --project $CLOUD_PROJECT_ID -e $CLOUD_ENV_ID --pipe`
       SSH_HOST=$(echo "$SSH_HOST" | head -1)
       echo "SSH Host is: ${SSH_HOST}"
 fi
 
+PHP_VERSION=$(magento-cloud app:list -p $CLOUD_PROJECT_ID -e $CLOUD_ENV_ID --columns Type --format plain --no-header)
+echo "Detected php version is ${PHP_VERSION}"
 
 # output only after full result
-echo  "$(init_project)" &
+echo "$(init_project ${PHP_VERSION})" &
 
 
 if [ -n "$CLOUD_PROJECT_ID" ]
@@ -159,20 +186,6 @@ fi
 
 CODE_FILE="$(ls  php*.code.tar.gz | sort -V | tail -n1)"
 DATABASE_FILE="$(ls  php*.database.sql.gz | sort -V | tail -n1)"
-
-if [ -n "${CODE_FILE}" ]
-then
-  PHP_VERSION="${CODE_FILE/php/}"
-  PHP_VERSION="${PHP_VERSION/.code.tar.gz/}"
-  echo "Detected php version is ${PHP_VERSION}"
-
-  # now I don't have php lower than 7.3, so try to deploy 7.3 for all other versions
-  if [ "${PHP_VERSION}" != "74" ]
-  then
-      sed -i '' 's/PHP_VERSION=7.4/PHP_VERSION=7.3/g' .env
-  fi
-fi
-
 
 wait
 
@@ -184,11 +197,9 @@ unpack_code () {
   fi
 }
 
+warden env up
 # output only after full result
 echo  "$(unpack_code)" &
-
-
-warden env up
 
 
 
