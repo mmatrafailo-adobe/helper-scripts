@@ -1,19 +1,32 @@
 <?php
-
 //var_dump(getDomainsFromEnv(__DIR__));
 //echo PHP_EOL;
 //die;
 $command = $argv[1] ?? null;
 
-if ($command === 'env') {
-    replaceConfig(__DIR__);
-} elseif($command === 'db') {
-    replaceDb(__DIR__);
+try {
+    switch ($command) {
+        case 'env':
+            replaceConfig(__DIR__);
+            break;
+        case 'env-revert':
+            envRevert(__DIR__);
+            break;
+        case 'db':
+            replaceDb(__DIR__);
+            break;
+        case 'db-revert':
+            dbRevert(__DIR__);
+            break;
+        default:
+
+            die("Command not specified. For replacing app/etc/env.php run php replace-scripts.php env");
+            break;
+    }
+} catch (\Throwable $e) {
+    echo "THERE IS AN ERROR: " . $e->getMessage() . PHP_EOL;
 }
 
-if (!$command) {
-    die("Command not specified. For replacing app/etc/env.php run php replace-scripts.php env");
-}
 
 function getDomainsFromEnv($path) {
     $config = include $path . '/app/etc/env.php';
@@ -53,25 +66,95 @@ function getDomainsFromEnv($path) {
     return array_unique($domains);
 }
 
-function getConfigsFromEnv($path) {
+function getConfigsFromEnv($path, $configPaths) {
 
     $config = include $path . '/app/etc/env.php';
 
+    $configsFromEnv = [];
+
     if (empty($config['system'])) {
-        return [];
+        return $configsFromEnv;
     }
 
+    $configPatcher = new ConfigPatcher($config);
 
+    foreach ($configPaths as $configPath) {
+        $configValue = $configPatcher->get('system/default/' . $configPath, '/');
+        if ($configValue != null) {
+            $configsFromEnv[] = [
+                'scope' => 'default',
+                'scope_code' => 'default',
+                'path' => $configPath,
+                'value' => $configValue,
+                'source' => 'env'
+            ];
+        }
+
+        foreach ($config['system'] as $scopeType => $data) {
+            if ($scopeType === 'default') {
+                continue;
+            }
+
+            foreach ($data as $scopeCode => $scopeConfig) {
+                $configValue = $configPatcher->get("system/{$scopeType}/{$scopeCode}/{$configPath}", '/');
+                if ($configValue != null) {
+                    $configsFromEnv[] = [
+                        'scope' => $scopeType,
+                        'scope_code' => $scopeCode,
+                        'path' => $configPath,
+                        'value' => $configValue,
+                        'source' => 'env'
+                    ];
+                }
+            }
+        }
+    }
+
+    return $configsFromEnv;
+}
+
+function createBackupTable(DBConnection $db, $tableName) {
+    if ($db->isTableExists($tableName . '_autobackup')) {
+        throw new \Exception('Table ' . $tableName . '_autobackup already exists!');
+    }
+    // make dump of original table:
+    $db->query('CREATE TABLE '.$tableName.'_autobackup LIKE '.$tableName);
+    $db->query('INSERT INTO '.$tableName.'_autobackup SELECT * FROM '.$tableName);
+}
+
+
+function restoreTableFromBackup(DBConnection $db, $tableName)
+{
+    if (!$db->isTableExists($tableName)) {
+        throw new \Exception('Table ' . $tableName . ' not exist!');
+    }
+    $db->query("DELETE FROM {$tableName}");
+    $db->query('INSERT INTO '.$tableName.' SELECT * FROM ' . $tableName . '_autobackup');
+    $db->query('DROP TABLE ' . $tableName . '_autobackup');
+}
+
+function dbRevert($path) {
+    echo "REVERTING db values..." . PHP_EOL;
+    $envConfig = include $path . '/app/etc/env.php';
+    $db = new DBConnection($envConfig);
+
+    restoreTableFromBackup($db, 'core_config_data');
 }
 
 function replaceDb($path) {
 
     echo "Replacing db values..." . PHP_EOL;
 
-    $config = include $path . '/app/etc/env.php';
+    $envConfig = include $path . '/app/etc/env.php';
+    $configPatcher = new ConfigPatcher($envConfig);
 
 
-    $db = new DBConnection($config);
+    $db = new DBConnection($envConfig);
+
+    // make dump of original table:
+    createBackupTable($db, 'core_config_data');
+
+
     $domainPatches = [
         'web/unsecure/base_url',
         'web/secure/base_url',
@@ -86,7 +169,23 @@ function replaceDb($path) {
     ];
     $patchWhere = implode(',', array_map(static function($value) {return "'{$value}'";}, $domainPatches));
 
-    $configs = $db->getAllRows("SELECT * FROM core_config_data WHERE path IN({$patchWhere})");
+    $configsFromEnv = getConfigsFromEnv($path, $domainPatches);
+
+    $configsFromDb = $db->getAllRows("SELECT
+       CASE
+        when c.scope = 'websites' THEN w.code
+        WHEN c.scope = 'stores' THEN s.code
+        ELSE 'default'
+        END AS scope_code,
+       c.*,
+       'db' as `source`
+FROM core_config_data as c
+    LEFT JOIN store_website as w ON c.scope_id = w.website_id AND c.scope = 'websites'
+    LEFT JOIN store as s ON c.scope_id = s.store_id AND c.scope = 'stores'
+WHERE c.path IN({$patchWhere})");
+
+
+    $configs = array_merge($configsFromEnv, $configsFromDb);
 
 
 //$stores = $db->getAllRows("SELECT * FROM store", 'store_id');
@@ -103,6 +202,13 @@ function replaceDb($path) {
 
     $updates = [];
     foreach ($configs as $config) {
+        $fullPatch = 'system/' . $config['scope'] . '/' . ($config['scope_code'] === 'default' ? '' : $config['scope_code'] . '/') . $config['path'];
+
+        // if config already exists in env file
+        if ($config['source'] === 'db' && $configPatcher->exists($fullPatch, '/')) {
+            continue;
+        }
+
         $domain = getDomain($config['value']);
         if (!$domain || strpos($domain, '{{') === 0) {
             continue;
@@ -117,32 +223,18 @@ function replaceDb($path) {
             $newDomain = 'app.' . $replaceDomain;
         } else {
 
-            $newDomain = str_replace('.', '-', $domain) . '.' . $replaceDomain;
+            $newDomain = explode('.', $domain);
+            if (!empty($newDomain[0]) && $newDomain[0] === 'www') {
+                array_shift($newDomain);
+            }
+            array_pop($newDomain);
+            $newDomain = implode('.', $newDomain);
+            $newDomain = str_replace('.', '-', $newDomain) . '.' . $replaceDomain;
         }
 
         $uniqueDomains[$domain] = $newDomain;
-        //if (isset($uniqueDomains))
-//    switch ($config['scope']) {
-//        case 'default':
-//            $scopes['default'] = $domain;
-//            break;
-//        case 'websites':
-//            $scopes['websites'][$config['scope_id']] = $domain;
-//            break;
-//        case 'stores':
-//            $scopes['stores'][$config['scope_id']] = $domain;
-//            break;
-//    }
     }
     $db->query("UPDATE core_config_data SET value = 'admin' WHERE path = 'admin/url/custom_path'");
-
-
-
-    echo "Backup configs" . PHP_EOL;
-    $backupPatchWhere = implode(',', array_map(static function($value) {return "'{$value}_backup'";}, $domainPatches));;
-    $db->query("DELETE FROM core_config_data WHERE path IN({$backupPatchWhere})");
-    $db->query("INSERT INTO core_config_data
-SELECT NULL, scope, scope_id, CONCAT(path, '_backup'), value, updated_at FROM core_config_data WHERE path IN({$patchWhere})");
 
 
     $magentoVarsContent = "";
@@ -158,7 +250,7 @@ SELECT NULL, scope, scope_id, CONCAT(path, '_backup'), value, updated_at FROM co
     foreach ($uniqueDomains as $domain => $replacement) {
         $db->query("UPDATE core_config_data SET value = REPLACE(value, '{$domain}', '{$replacement}') WHERE path IN({$patchWhere})");
         $magentoVarsContent = str_replace($domain, $replacement, $magentoVarsContent);
-        $envContent = str_replace($domain, $replacement, $magentoVarsContent);
+        $envContent = str_replace($domain, $replacement, $envContent);
     }
 
     if ($magentoVarsContent) {
@@ -167,11 +259,29 @@ SELECT NULL, scope, scope_id, CONCAT(path, '_backup'), value, updated_at FROM co
         file_put_contents(__DIR__ . '/magento-vars-local.php', $magentoVarsContent);
     }
 
+    file_put_contents(__DIR__ . '/app/etc/env.php', $envContent);
+
     echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
     $domains = implode(" ", $uniqueDomains);
 
     echo 'HOSTS_COMMAND=echo "127.0.0.1 '.$domains.'" | sudo tee -a /etc/hosts';
     echo PHP_EOL . "=========================" . PHP_EOL;
+}
+
+function envRevert ($path)
+{
+    $envPath = $path . '/app/etc/env.php';
+    $autobackupPath = $envPath . '.autobackup';
+
+    if (!is_file($autobackupPath)) {
+        echo "\r\n";
+        echo ('Incorrect run directory, it should be home magento directory. Unable to locate env.php.autobackup ' . $autobackupPath . "\r\n");
+
+        return;
+    }
+
+    unlink($envPath);
+    rename($autobackupPath, $envPath);
 }
 function replaceConfig($path) {
 
@@ -283,8 +393,8 @@ class ConfigPatcher
         $this->config = $config;
     }
 
-    public function exists($path) {
-        $keys = explode('.', $path);
+    public function exists($path, $separator = '.') {
+        $keys = explode($separator, $path);
 
         $current = $this->config;
         foreach ($keys as $key) {
@@ -351,8 +461,20 @@ class ConfigPatcher
         return $this->config;
     }
 
-    public function get($path) {
+    public function get($path, $separator)
+    {
+        $keys = explode($separator, $path);
 
+        $value = $this->config;
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $value)) {
+                return null;
+            }
+
+            $value = $value[$key];
+        }
+
+        return $value;
     }
 
     public function remove($path) {
@@ -392,9 +514,13 @@ class DBConnection
 {
     private $pdo;
 
-    public function __construct(array $config)
+    private $dbName;
+
+    public function __construct(array $config, $connectionName = 'default')
     {
-        $dbConfig = $config['db']['connection']['default'];
+        $dbConfig = $config['db']['connection'][$connectionName];
+
+        $this->dbName = $dbConfig['dbname'];
         $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset=utf8mb4";
         $options = [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -410,6 +536,28 @@ class DBConnection
 
     public function query($sql) {
         return $this->pdo->query($sql);
+    }
+
+    public function fetchOne($sql)
+    {
+        $stmt = $this->query($sql);
+
+        return $stmt->fetchColumn();
+    }
+
+    public function isTableExists($tableName)
+    {
+        $sql = "SELECT COUNT(TABLE_NAME) as cnt
+FROM
+    information_schema.TABLES
+WHERE
+        TABLE_SCHEMA LIKE '{$this->dbName}' AND
+        TABLE_TYPE LIKE 'BASE TABLE' AND
+        TABLE_NAME = '{$tableName}'";
+
+        $count = $this->fetchOne($sql);
+
+        return $count > 0;
     }
 
 
