@@ -109,7 +109,7 @@ init_project () {
   cp ${SCRIPT_DIR}/replace-scripts.php ./
 
   local PHP_VERSION=${1}
-  if [ "${PHP_VERSION}" != "7.4" ]
+  if [[ "${PHP_VERSION}" != *"7.4"* ]]
   then
       sed -i '' 's/PHP_VERSION=7.4/PHP_VERSION=7.3/g' .env
   fi
@@ -197,12 +197,13 @@ unpack_code () {
   fi
 }
 
-warden env up
 # output only after full result
 echo  "$(unpack_code)" &
 
-
-
+# mutagen sync can not be on time so we need fully unpack before up env
+# TODO
+wait
+warden env up
 
 
 if [ -n "${DATABASE_FILE}" ]
@@ -226,6 +227,7 @@ echo "Run dump autoload"
 warden env exec -T php-fpm composer dump-autoload
 
 warden env exec -T php-fpm php replace-scripts.php env
+warden env exec -T php-fpm php replace-scripts.php conf
 
 REPLACE_SCRIPTS_COMMAND=$(warden env exec -T php-fpm php replace-scripts.php db)
 echo "${REPLACE_SCRIPTS_COMMAND}"
@@ -249,4 +251,3 @@ echo TOTAL time of execution is: $(convertsecs TOTAL_TIME_OF_EXECUTION)
 echo "https://app.${PROJECT_NAME}.test/"
 echo "cd ${PROJECT_NAME}"
 eval $HOSTS_COMMAND
-

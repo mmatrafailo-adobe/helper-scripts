@@ -6,8 +6,14 @@ $command = $argv[1] ?? null;
 
 try {
     switch ($command) {
+        case 'conf':
+            replaceConfigPhp(__DIR__);
+            break;
+        case 'conf-revert':
+            configRevert(__DIR__);
+            break;
         case 'env':
-            replaceConfig(__DIR__);
+            replaceEnvConfig(__DIR__);
             break;
         case 'env-revert':
             envRevert(__DIR__);
@@ -283,7 +289,53 @@ function envRevert ($path)
     unlink($envPath);
     rename($autobackupPath, $envPath);
 }
-function replaceConfig($path) {
+
+function configRevert($path) {
+    $filePath = $path . '/app/etc/config.php';
+    $autobackupPath = $filePath . '.autobackup';
+
+    if (!is_file($autobackupPath)) {
+        echo "\r\n";
+        echo ('Incorrect run directory, it should be home magento directory. Unable to locate config.php.autobackup ' . $autobackupPath . "\r\n");
+
+        return;
+    }
+
+    unlink($filePath);
+    rename($autobackupPath, $filePath);
+}
+
+function replaceConfigPhp($path) {
+    echo "Replacing app/etc/config.php" . PHP_EOL;
+
+    $filePath = $path . '/app/etc/config.php';
+    $autobackupPath = $filePath . '.autobackup';
+
+    if (!is_file($filePath)) {
+        echo "\r\n";
+        echo ('Incorrect run directory, it should be home magento directory. Unable to locate config.php ' . $filePath . "\r\n");
+
+        return;
+    }
+
+    if (is_file($autobackupPath)) {
+        echo "\r\n";
+        echo ('Autobackup already exists! I can\'t run ' . $autobackupPath . "\r\n");
+        return;
+    }
+
+    copy($filePath, $autobackupPath);
+
+    $config = include $filePath;
+    $configPatcher = new ConfigPatcher($config);
+
+    $configPatcher->replaceIfExists('system.default.admin.url.use_custom_path', '0');
+
+    $config = $configPatcher->getConfigArray();
+
+    file_put_contents($filePath, "<?php\r\nreturn " . varexport($config, true) . ';');
+}
+function replaceEnvConfig($path) {
 
     echo "Replacing app/etc/env.php" . PHP_EOL;
 
