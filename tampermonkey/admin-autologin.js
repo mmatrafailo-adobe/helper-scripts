@@ -5,6 +5,7 @@
 // @description  Autologin into admin panel if credentials are
 // @author       Nick Puchko <npuchko@adobe.com>
 // @match        https://*.test/admin*
+// @match        *://*.nip.io/pub/admin*
 // @match        https://*.sparta.ceng.magento.com/*/admin*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=adobe.com
 // @grant        none
