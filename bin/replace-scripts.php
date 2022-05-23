@@ -241,6 +241,7 @@ WHERE c.path IN({$patchWhere})");
         $uniqueDomains[$domain] = $newDomain;
     }
     $db->query("UPDATE core_config_data SET value = 'admin' WHERE path = 'admin/url/custom_path'");
+    $db->query("UPDATE core_config_data SET value = NULL WHERE path = 'recaptcha_backend/type_for/user_login'");
 
 
     $magentoVarsContent = "";
