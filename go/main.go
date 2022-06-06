@@ -245,7 +245,7 @@ func getListOfEnvironments(dir string) Environments {
 			envData, err := godotenv.Read(dir + "/" + f.Name() + "/.env")
 			if err == nil {
 				containerUrl = "https://" + envData["TRAEFIK_SUBDOMAIN"] + "." + envData["TRAEFIK_DOMAIN"] + "/"
-				command := "docker ps -f name=" + f.Name()
+				command := "docker ps -f name=" + f.Name() + "_"
 				out, err := exec.Command("bash", "-c", command).CombinedOutput()
 				if err != nil {
 					fmt.Println("Failed to execute command: %s", command)
