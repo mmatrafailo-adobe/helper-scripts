@@ -17,6 +17,10 @@
     let projectUrl = $("#customfield_14217-val a").attr("href");
 
     if (!projectUrl) {
+        projectUrl = $("#customfield_18505-val a").attr("href");
+    }
+
+    if (!projectUrl) {
         console.log("Project URL not found!!!!");
         return;
     }
