@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.2
+// @version      0.2.1
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
+// @match        https://jira.corp.adobe.com/browse/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=magento.com
 // @require      https://code.jquery.com/jquery-latest.js
 // @grant        none
