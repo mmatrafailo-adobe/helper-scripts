@@ -257,11 +257,17 @@ func getListOfEnvironments(dir string) Environments {
 			}
 		}
 
+		jiraBase := "adobe"
 		ticketNumber := strings.Replace(f.Name(), "mdva", "MDVA-", 1)
+		if strings.Contains(ticketNumber, "MDVA") {
+			jiraBase = "magento"
+		} else {
+			ticketNumber = strings.Replace(f.Name(), "acsd", "ACSD-", 1)
+		}
 		environment := Environment{
 			Name:         f.Name(),
 			FullPath:     dir + "/" + f.Name(),
-			JiraUrl:      "https://jira.corp.magento.com/browse/" + ticketNumber,
+			JiraUrl:      "https://jira.corp." + jiraBase + ".com/browse/" + ticketNumber,
 			Time:         f.ModTime(),
 			ContainerUrl: containerUrl,
 			IsRunning:    isRunning,
