@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.2.1
+// @version      0.3.0
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -15,6 +15,13 @@
     'use strict';
     let issueNumber = $("#key-val").text();
     let projectUrl = $("#customfield_14217-val a").attr("href");
+    let currentUrl = document.location.href;
+
+    if (currentUrl.indexOf('corp.adobe.com') !== -1 && currentUrl.indexOf('/ACSD-') !== -1) {
+        const magentoUrl = 'https://jira.corp.magento.com/browse/MDVA' + issueNumber.replace('ACSD', '');
+        console.log(magentoUrl);
+        appendUrl('Old JIRA', magentoUrl);
+    }
 
     if (!projectUrl) {
         projectUrl = $("#customfield_18505-val a").attr("href");
@@ -64,6 +71,22 @@
         $("#" + id).click(function () {
             copyToClipboard(this.value);
         });
+    }
+
+    function appendUrl(title, url) {
+        const fieldsList = $("#customfield-panel-1 ul.property-list");
+        const id = "auto_" + makeid(10);
+        fieldsList.append("<li id=\"wdi_command_wrap\" class=\"item\">\n" +
+            "        <div class=\"wrap\">\n" +
+            "            <strong title=\"Company\" class=\"name\">\n" +
+            "                                    <label for=\"customfield_10040\">"+title+":</label>\n" +
+            "                            </strong>\n" +
+            "            <div class=\"value type-textfield\" data-fieldtype=\"textfield\" style='width: 80%'>\n" + '' +
+            "<a href='" + url +"'   style=\"width:50%\">" +
+            url +
+            "</a>                            </div>\n" +
+            "        </div>\n" +
+            "    </li>");
     }
     function copyToClipboard(str) {
         const el = document.createElement('textarea');  // Create a <textarea> element

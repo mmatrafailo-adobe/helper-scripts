@@ -140,15 +140,22 @@ else
   echo "Cloud project ID  is: ${CLOUD_PROJECT_ID}"
 fi
 
-if [ -z "$3" ]
-then
-      magento-cloud env:list -p ${CLOUD_PROJECT_ID} -I --format plain --pipe
-      read -p 'Enter environment ID: ' CLOUD_ENV_ID
-else
-  CLOUD_ENV_ID=$3
 
-  echo "Cloud environment ID  is: ${CLOUD_ENV_ID}"
+
+if [ -n "$CLOUD_PROJECT_ID" ]
+then
+  if [ -z "$3" ]
+  then
+        magento-cloud env:list -p ${CLOUD_PROJECT_ID} -I --format plain --pipe
+        read -p 'Enter environment ID: ' CLOUD_ENV_ID
+  else
+    CLOUD_ENV_ID=$3
+
+    echo "Cloud environment ID  is: ${CLOUD_ENV_ID}"
+  fi
 fi
+
+
 
 PROJECT_NAME="${PROJECT_NAME//-/}"
 PROJECT_NAME=$(echo "$PROJECT_NAME" |  tr '[:upper:]' '[:lower:]' )
