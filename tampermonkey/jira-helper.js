@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.3.0
+// @version      0.3.1
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -19,8 +19,12 @@
 
     if (currentUrl.indexOf('corp.adobe.com') !== -1 && currentUrl.indexOf('/ACSD-') !== -1) {
         const magentoUrl = 'https://jira.corp.magento.com/browse/MDVA' + issueNumber.replace('ACSD', '');
-        console.log(magentoUrl);
         appendUrl('Old JIRA', magentoUrl);
+    }
+
+    if (currentUrl.indexOf('corp.magento.com') !== -1 && currentUrl.indexOf('/MDVA-') !== -1) {
+        const magentoUrl = 'https://jira.corp.adobe.com/browse/ACSD' + issueNumber.replace('MDVA', '');
+        appendUrl('NEW JIRA', magentoUrl);
     }
 
     if (!projectUrl) {
@@ -40,17 +44,15 @@
     let envId = parts[4] || '';
 
     const command = "wdi " + issueNumber + " " + projectId + " " + envId;
-    let mgcCommand = "mgc ssh -p " + projectId;
-    let sqlCommand = "mgc sql -p " + projectId;
 
+    let magentoCloudCommandParams = "-p " + projectId;
     if (envId) {
-        mgcCommand += " -e " + envId;
-        sqlCommand += " -e " + envId;
+        magentoCloudCommandParams += " -e " + envId;
     }
-    console.log(command);
+
     appendToJIRA("warden command", command);
-    appendToJIRA("SSH command", mgcCommand);
-    appendToJIRA("SQL command", sqlCommand);
+    appendToJIRA("SSH command", "magento-cloud ssh " + magentoCloudCommandParams);
+    appendToJIRA("SQL command", "magento-cloud sql " + magentoCloudCommandParams);
 
     function appendToJIRA(title, command) {
         const fieldsList = $("#customfield-panel-1 ul.property-list");
