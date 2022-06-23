@@ -7,7 +7,6 @@
 ```shell
 
 sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/wdi /usr/local/bin/wdi
-sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/wah /usr/local/bin/wah
 sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/warden-remove /usr/local/bin/warden-remove
 
 ```
