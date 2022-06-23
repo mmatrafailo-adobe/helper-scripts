@@ -1,3 +1,5 @@
+# Installation
+
 1. Have magento-cloud installed and configured with API TOKEN.
 2. Have cloud-teleport installed and configured
 3. Have warden from this repo and branch https://github.com/npuchko/warden-multi-arch/tree/debian
@@ -11,7 +13,11 @@ sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/warden-remove /usr/local/bi
 ```
 
 
-=== Known Issues ===
+# Known Issues
 
 1. 503 Backend fetch failed varnish - disable Magento_Csp (it puts lots of headers)
-2. Endless redirect to self when open admin url: go to pub/index.php and add $_SERVER['HTTPS'] = 'https'; before magento runs
+2. Endless redirect to self when open admin url: go to pub/index.php and add 
+```php 
+$_SERVER['HTTPS'] = 'https';
+``` 
+to very start of the file
