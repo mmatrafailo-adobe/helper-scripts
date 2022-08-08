@@ -388,7 +388,8 @@ function replaceEnvConfig($path) {
 
     $redisSettings = [
         'server' => 'redis',
-        'port' => '6379'
+        'port' => '6379',
+        'password' => ''
     ];
     if ($configPatcher->exists('cache.frontend.default.backend_options.remote_backend_options')) {
         $configPatcher->replaceIfExists('cache.frontend.default.backend_options.remote_backend_options', $redisSettings);
