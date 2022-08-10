@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.3.1
+// @version      0.4.0
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -53,6 +53,9 @@
     appendToJIRA("warden command", command);
     appendToJIRA("SSH command", "magento-cloud ssh " + magentoCloudCommandParams);
     appendToJIRA("SQL command", "magento-cloud sql " + magentoCloudCommandParams);
+
+
+    appendToJIRA("MSC command", "msc " + projectId + " " + envId);
 
     function appendToJIRA(title, command) {
         const fieldsList = $("#customfield-panel-1 ul.property-list");
