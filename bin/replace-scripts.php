@@ -331,6 +331,7 @@ function replaceConfigPhp($path) {
     $configPatcher = new ConfigPatcher($config);
 
     $configPatcher->replaceIfExists('system.default.admin.url.use_custom_path', '0');
+    $configPatcher->replaceIfExists('system.default.system.security.max_session_size_admin', '1024000');
 
     $config = $configPatcher->getConfigArray();
 
@@ -399,6 +400,7 @@ function replaceEnvConfig($path) {
     $configPatcher->replaceIfExists('cache.frontend.page_cache.backend_options', $redisSettings);
     $configPatcher->replaceIfExists('system.default.smile_elasticsuite_core_base_settings.es_client.servers', 'elasticsearch:9200');
     $configPatcher->replaceIfExists('system.default.catalog.search.elasticsearch7_server_hostname', 'elasticsearch');
+    $configPatcher->replaceIfExists('system.default.system.security.max_session_size_admin', '1024000');
 
 
     $config = $configPatcher->getConfigArray();
