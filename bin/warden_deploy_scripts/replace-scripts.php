@@ -4,25 +4,26 @@
 //die;
 $command = $argv[1] ?? null;
 
+$magentoRootDir = dirname(__DIR__);
 try {
     switch ($command) {
         case 'conf':
-            replaceConfigPhp(__DIR__);
+            replaceConfigPhp($magentoRootDir);
             break;
         case 'conf-revert':
-            configRevert(__DIR__);
+            configRevert($magentoRootDir);
             break;
         case 'env':
-            replaceEnvConfig(__DIR__);
+            replaceEnvConfig($magentoRootDir);
             break;
         case 'env-revert':
-            envRevert(__DIR__);
+            envRevert($magentoRootDir);
             break;
         case 'db':
-            replaceDb(__DIR__);
+            replaceDb($magentoRootDir);
             break;
         case 'db-revert':
-            dbRevert(__DIR__);
+            dbRevert($magentoRootDir);
             break;
         default:
 
@@ -197,7 +198,7 @@ WHERE c.path IN({$patchWhere})");
 //$stores = $db->getAllRows("SELECT * FROM store", 'store_id');
 //$websites = $db->getAllRows("SELECT * FROM store_website", 'website_id');
 
-    $settingsObject = new DotEnv(__DIR__ . '/.env');
+    $settingsObject = new DotEnv($path . '/.env');
     $settings = $settingsObject->get();
     $replaceDomain = $settings['TRAEFIK_DOMAIN'];
     $currentReplace = "https://{$settings['TRAEFIK_SUBDOMAIN']}.{$replaceDomain}/";
@@ -242,12 +243,13 @@ WHERE c.path IN({$patchWhere})");
     }
     $db->query("UPDATE core_config_data SET value = 'admin' WHERE path = 'admin/url/custom_path'");
     $db->query("UPDATE core_config_data SET value = NULL WHERE path = 'recaptcha_backend/type_for/user_login'");
+    $db->query("UPDATE core_config_data SET value = '2' WHERE path = 'system/full_page_cache/caching_application'");
 
 
     $magentoVarsContent = "";
-    if (is_file(__DIR__ . '/magento-vars.php')) {
+    if (is_file($path . '/magento-vars.php')) {
         echo "Found magento-vars.php file" . PHP_EOL;
-        $magentoVarsContent = file_get_contents(__DIR__ . '/magento-vars.php');
+        $magentoVarsContent = file_get_contents($path . '/magento-vars.php');
     }
 
     $envContent = file_get_contents($path . '/app/etc/env.php');
@@ -263,10 +265,10 @@ WHERE c.path IN({$patchWhere})");
     if ($magentoVarsContent) {
         echo "Saved magento-vars-local.php file for multiple domains" . PHP_EOL;
         echo "Please include magento-vars-local.php into pub/index.php" . PHP_EOL;
-        file_put_contents(__DIR__ . '/magento-vars-local.php', $magentoVarsContent);
+        file_put_contents($path . '/magento-vars-local.php', $magentoVarsContent);
     }
 
-    file_put_contents(__DIR__ . '/app/etc/env.php', $envContent);
+    file_put_contents($path . '/app/etc/env.php', $envContent);
 
     echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
     $domains = implode(" ", $uniqueDomains);
@@ -416,12 +418,12 @@ function replaceEnvConfig($path) {
     unset($config['cache']['frontend']['default']['backend_options']['remote_backend_options']['load_from_slave']);
     unset($config['cache']['frontend']['page_cache']['backend_options']['remote_backend_options']['load_from_slave']);
 
-//$config['http_cache_hosts'] = [
-//    [
-//      'host' => 'varnish',
-//      'port' => '80'
-//    ]
-//];
+    $config['http_cache_hosts'] = [
+        [
+          'host' => 'varnish',
+          'port' => '80'
+        ]
+    ];
     file_put_contents($envPath, "<?php\r\nreturn " . varexport($config, true) . ';');
 }
 

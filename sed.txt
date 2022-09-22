@@ -1,0 +1,8 @@
+sed '0,/pattern/s/pattern/replacement/' filename
+
+
+sed 's#wyomind_framework/use_pub_folder#wyomind_framework/use_pub_folder2#1'
+sed 's#utf8mb4_0900_ai_ci#utf8mb4_general_ci#1'
+
+
+sed -i '' '/utf8mb4_0900_ai_ci/ s//utf8mb4_general_ci/g' dump.sql

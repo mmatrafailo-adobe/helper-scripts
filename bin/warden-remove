@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 ENV_NAME=$1
 echo "removing ${ENV_NAME}"
+cd ${ENV_NAME}/source
+warden env down -v
+cd ../../
 docker volume rm ${ENV_NAME}_appdata ${ENV_NAME}_bashhistory ${ENV_NAME}_dbdata ${ENV_NAME}_esdata ${ENV_NAME}_rabbitmq ${ENV_NAME}_redis ${ENV_NAME}_sshdirectory
-docker image rm ${ENV_NAME}_php-fpm
+docker image rm ${ENV_NAME}_php-fpm ${ENV_NAME}_elasticsearch
+docker network rm ${ENV_NAME}_default
 rm -rf ${ENV_NAME}
