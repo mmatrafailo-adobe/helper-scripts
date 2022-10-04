@@ -241,8 +241,16 @@ func getListOfEnvironments(dir string) Environments {
 		containerUrl := ""
 		isRunning := false
 
+		hasSourceFolder := false
+		_, err := os.Stat(envFilePath)
+		if err != nil {
+			envFilePath = dir + "/" + f.Name() + "/source/.env"
+			fmt.Println(envFilePath)
+			hasSourceFolder = true
+		}
+
 		if _, err := os.Stat(envFilePath); err == nil {
-			envData, err := godotenv.Read(dir + "/" + f.Name() + "/.env")
+			envData, err := godotenv.Read(envFilePath)
 			if err == nil {
 				containerUrl = "https://" + envData["TRAEFIK_SUBDOMAIN"] + "." + envData["TRAEFIK_DOMAIN"] + "/"
 				command := "docker ps -f name=" + f.Name() + "_"
@@ -264,9 +272,14 @@ func getListOfEnvironments(dir string) Environments {
 		} else {
 			ticketNumber = strings.Replace(f.Name(), "acsd", "ACSD-", 1)
 		}
+
+		fullPath := dir + "/" + f.Name()
+		if hasSourceFolder {
+			fullPath += "/source"
+		}
 		environment := Environment{
 			Name:         f.Name(),
-			FullPath:     dir + "/" + f.Name(),
+			FullPath:     fullPath,
 			JiraUrl:      "https://jira.corp." + jiraBase + ".com/browse/" + ticketNumber,
 			Time:         f.ModTime(),
 			ContainerUrl: containerUrl,
