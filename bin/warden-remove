@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 ENV_NAME=$1
 echo "removing ${ENV_NAME}"
-cd ${ENV_NAME}/source
+cd ${ENV_NAME}
+is_source_dir=false
+if [ -d "source" ] ; then
+  cd source
+  is_source_dir=true
+fi
+
 warden env down -v
-cd ../../
+
+if [ "$is_source_dir" = true ] ; then
+  cd ../
+fi
+cd ../
 docker volume rm ${ENV_NAME}_appdata ${ENV_NAME}_bashhistory ${ENV_NAME}_dbdata ${ENV_NAME}_esdata ${ENV_NAME}_rabbitmq ${ENV_NAME}_redis ${ENV_NAME}_sshdirectory
 docker image rm ${ENV_NAME}_php-fpm ${ENV_NAME}_elasticsearch
 docker network rm ${ENV_NAME}_default
