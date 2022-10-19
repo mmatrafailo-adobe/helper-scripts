@@ -197,6 +197,7 @@ func main() {
 			return
 		}
 
+		fmt.Println("Running warden-remove  " + name + " in dir " + dirForClientDumps)
 		cmd := exec.Command("warden-remove", name)
 		cmd.Dir = dirForClientDumps
 		out, err := cmd.CombinedOutput()
@@ -225,6 +226,18 @@ func getStatic() http.FileSystem {
 	return http.FS(static)
 }
 
+func getListOfRunnedContainers() string {
+	command := "docker ps --format '{{.Names}}'"
+	out, err := exec.Command("bash", "-c", command).CombinedOutput()
+	if err != nil {
+		fmt.Println("Failed to execute command: %s", command)
+	} else {
+		fmt.Println(string(out))
+	}
+
+	return string(out)
+}
+
 func getListOfEnvironments(dir string) Environments {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -232,6 +245,8 @@ func getListOfEnvironments(dir string) Environments {
 	}
 
 	environments := Environments{}
+
+	runnedContainers := getListOfRunnedContainers()
 
 	for _, f := range files {
 		envFilePath := dir + "/" + f.Name() + "/.env"
@@ -245,24 +260,20 @@ func getListOfEnvironments(dir string) Environments {
 		_, err := os.Stat(envFilePath)
 		if err != nil {
 			envFilePath = dir + "/" + f.Name() + "/source/.env"
-			fmt.Println(envFilePath)
 			hasSourceFolder = true
 		}
 
 		if _, err := os.Stat(envFilePath); err == nil {
 			envData, err := godotenv.Read(envFilePath)
 			if err == nil {
-				containerUrl = "https://" + envData["TRAEFIK_SUBDOMAIN"] + "." + envData["TRAEFIK_DOMAIN"] + "/"
-				command := "docker ps -f name=" + f.Name() + "_"
-				out, err := exec.Command("bash", "-c", command).CombinedOutput()
-				if err != nil {
-					fmt.Println("Failed to execute command: %s", command)
-				} else {
-					if strings.Contains(string(out), f.Name()) {
-						isRunning = true
-					}
+				isRunning = strings.Contains(runnedContainers, f.Name()+"-")
+				if !isRunning {
+					isRunning = strings.Contains(runnedContainers, f.Name()+"_")
 				}
+				containerUrl = "https://" + envData["TRAEFIK_SUBDOMAIN"] + "." + envData["TRAEFIK_DOMAIN"] + "/"
 			}
+		} else {
+			hasSourceFolder = false
 		}
 
 		jiraBase := "adobe"
