@@ -216,6 +216,10 @@ WHERE c.path IN({$patchWhere})");
             continue;
         }
 
+        if (empty($config['value'])) {
+            continue;
+        }
+
         $domain = getDomain($config['value']);
         if (!$domain || strpos($domain, '{{') === 0) {
             continue;
