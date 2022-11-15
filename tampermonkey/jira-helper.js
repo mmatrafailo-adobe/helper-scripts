@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.4.0
+// @version      0.5.0
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -11,57 +11,74 @@
 // @grant        none
 // ==/UserScript==
 
-(function($) {
+(function($j) {
     'use strict';
-    let issueNumber = $("#key-val").text();
-    let projectUrl = $("#customfield_14217-val a").attr("href");
-    let currentUrl = document.location.href;
+    let existingIds = new Map();
 
-    if (currentUrl.indexOf('corp.adobe.com') !== -1 && currentUrl.indexOf('/ACSD-') !== -1) {
-        const magentoUrl = 'https://jira.corp.magento.com/browse/MDVA' + issueNumber.replace('ACSD', '');
-        appendUrl('Old JIRA', magentoUrl);
+    // subscribe to original jQuery ajax complete
+    $ && $(document).ajaxComplete(function () {
+        console.log('Request Complete');
+        updateHandle();
+    });
+    updateHandle();
+    function updateHandle() {
+        let issueNumber = $j("#key-val").text();
+        let projectUrl = $j("#customfield_14217-val a").attr("href");
+        let currentUrl = document.location.href;
+
+        if (currentUrl.indexOf('corp.adobe.com') !== -1 && currentUrl.indexOf('/ACSD-') !== -1) {
+            const magentoUrl = 'https://jira.corp.magento.com/browse/MDVA' + issueNumber.replace('ACSD', '');
+            appendUrl('Old JIRA', magentoUrl);
+        }
+
+        if (currentUrl.indexOf('corp.magento.com') !== -1 && currentUrl.indexOf('/MDVA-') !== -1) {
+            const magentoUrl = 'https://jira.corp.adobe.com/browse/ACSD' + issueNumber.replace('MDVA', '');
+            appendUrl('NEW JIRA', magentoUrl);
+        }
+
+        if (!projectUrl) {
+            projectUrl = $j("#customfield_18505-val a").attr("href");
+        }
+
+        if (!projectUrl) {
+            console.log("Project URL not found!!!!");
+            return;
+        }
+
+        // https://ap-3.magento.cloud/projects/ob77kg6julmeu/environments/integration2
+
+        const projectUrlObj = new URL(projectUrl);
+        const parts = projectUrlObj.pathname.split("/");
+        let projectId = parts[2] || '';
+        let envId = parts[4] || '';
+
+        const command = "wdi " + issueNumber + " " + projectId + " " + envId;
+
+        let magentoCloudCommandParams = "-p " + projectId;
+        if (envId) {
+            magentoCloudCommandParams += " -e " + envId;
+        }
+
+        appendToJIRA("warden command", command);
+        appendToJIRA("SSH command", "magento-cloud ssh " + magentoCloudCommandParams);
+        appendToJIRA("SQL command", "magento-cloud sql " + magentoCloudCommandParams);
+
+
+        appendToJIRA("MSC command", "msc " + projectId + " " + envId);
     }
 
-    if (currentUrl.indexOf('corp.magento.com') !== -1 && currentUrl.indexOf('/MDVA-') !== -1) {
-        const magentoUrl = 'https://jira.corp.adobe.com/browse/ACSD' + issueNumber.replace('MDVA', '');
-        appendUrl('NEW JIRA', magentoUrl);
-    }
-
-    if (!projectUrl) {
-        projectUrl = $("#customfield_18505-val a").attr("href");
-    }
-
-    if (!projectUrl) {
-        console.log("Project URL not found!!!!");
-        return;
-    }
-
-    // https://ap-3.magento.cloud/projects/ob77kg6julmeu/environments/integration2
-
-    const projectUrlObj = new URL(projectUrl);
-    const parts = projectUrlObj.pathname.split("/");
-    let projectId = parts[2] || '';
-    let envId = parts[4] || '';
-
-    const command = "wdi " + issueNumber + " " + projectId + " " + envId;
-
-    let magentoCloudCommandParams = "-p " + projectId;
-    if (envId) {
-        magentoCloudCommandParams += " -e " + envId;
-    }
-
-    appendToJIRA("warden command", command);
-    appendToJIRA("SSH command", "magento-cloud ssh " + magentoCloudCommandParams);
-    appendToJIRA("SQL command", "magento-cloud sql " + magentoCloudCommandParams);
-
-
-    appendToJIRA("MSC command", "msc " + projectId + " " + envId);
 
     function appendToJIRA(title, command) {
-        const fieldsList = $("#customfield-panel-1 ul.property-list");
+        const fieldsList = $j("#customfield-panel-1 ul.property-list");
 
         const id = "auto_" + makeid(10);
-        fieldsList.append("<li id=\"wdi_command_wrap\" class=\"item\">\n" +
+        const wrapId = id + "_wrap";
+        if (existingIds.has(title)) {
+            $j("#" + existingIds.get(title)).remove();
+        }
+
+        existingIds.set(title, wrapId);
+        fieldsList.append("<li id=\""+wrapId+"\" class=\"item\">\n" +
             "        <div class=\"wrap\">\n" +
             "            <strong title=\"Company\" class=\"name\">\n" +
             "                                    <label for=\"customfield_10040\">"+title+":</label>\n" +
@@ -73,15 +90,22 @@
             "        </div>\n" +
             "    </li>");
 
-        $("#" + id).click(function () {
+        $j("#" + id).click(function () {
             copyToClipboard(this.value);
         });
     }
 
     function appendUrl(title, url) {
-        const fieldsList = $("#customfield-panel-1 ul.property-list");
+        const fieldsList = $j("#customfield-panel-1 ul.property-list");
         const id = "auto_" + makeid(10);
-        fieldsList.append("<li id=\"wdi_command_wrap\" class=\"item\">\n" +
+
+        const wrapId = id + "_wrap";
+        if (existingIds.has(title)) {
+            $j("#" + existingIds.get(title)).remove();
+        }
+        existingIds.set(title, wrapId);
+
+        fieldsList.append("<li id=\""+wrapId+"\" class=\"item\">\n" +
             "        <div class=\"wrap\">\n" +
             "            <strong title=\"Company\" class=\"name\">\n" +
             "                                    <label for=\"customfield_10040\">"+title+":</label>\n" +
