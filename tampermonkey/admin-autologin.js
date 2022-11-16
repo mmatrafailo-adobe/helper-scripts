@@ -1,11 +1,14 @@
 // ==UserScript==
 // @name         Admin Autologin
 // @namespace    https://adobe.com
-// @version      0.2
+// @version      0.3
 // @description  Autologin into admin panel if credentials are
 // @author       Nick Puchko <npuchko@adobe.com>
 // @match        https://*.test/admin*
+// @match        https://*.test/index.php/admin*
 // @match        *://*.nip.io/pub/admin*
+// @match        *://*.nip.io/pub/index.php/admin*
+// @match        https://*.sparta.ceng.magento.com/*/admin*
 // @match        https://*.sparta.ceng.magento.com/*/admin*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=adobe.com
 // @grant        none
