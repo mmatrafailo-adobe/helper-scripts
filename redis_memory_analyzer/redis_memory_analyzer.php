@@ -1,5 +1,8 @@
 <?php
-$csvFilePath = __DIR__ .'/memory.csv';
+
+$csvFilePath = $argv[1] ?? __DIR__ .'/memory.csv';
+//var_dump($csvFilePath, is_file($csvFilePath));die;
+//$csvFilePath = __DIR__ .'/memory.csv';
 
 $handle = fopen($csvFilePath, 'r');
 
@@ -12,6 +15,7 @@ $template = [
     'count' => 0,
     'size' => 0,
     'expiry' => $now->sub(new DateInterval('P1M')),
+    'min_expiry' => $now->add(new DateInterval('P5Y')),
 ];
 $usage = [
     'session' => $template
@@ -70,6 +74,10 @@ while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
             $usage['session']['expiry'] = $expiry;
         }
 
+        if ($usage['session']['min_expiry'] > $expiry) {
+            $usage['session']['min_expiry'] = $expiry;
+        }
+
         continue;
     }
 
@@ -86,6 +94,10 @@ while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
 
     if ($usage[$dbKey]['expiry'] < $expiry) {
         $usage[$dbKey]['expiry'] = $expiry;
+    }
+
+    if ($usage[$dbKey]['min_expiry'] > $expiry) {
+        $usage[$dbKey]['min_expiry'] = $expiry;
     }
 
     $currentPrefixPartsCount = $prefixPartsCount;
@@ -109,6 +121,10 @@ while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
     if ($usage[$dbKey]['prefixes'][$prefix]['expiry'] < $expiry) {
         $usage[$dbKey]['prefixes'][$prefix]['expiry'] = $expiry;
     }
+
+    if ($usage[$dbKey]['prefixes'][$prefix]['min_expiry'] > $expiry) {
+        $usage[$dbKey]['prefixes'][$prefix]['min_expiry'] = $expiry;
+    }
 }
 
 fclose($handle);
@@ -131,7 +147,8 @@ foreach ($usage as $dbKey => &$dbData) {
         'count_keys_human' => number_format($dbData['count']),
         'size' => $dbData['size'],
         'size_human' => humanFileSize($dbData['size']),
-        'last_expiration' => $dbData['expiry']->format('Y-m-d H:i:s')
+        'last_expiration' => $dbData['expiry']->format('Y-m-d H:i:s'),
+        'min_expiration' => $dbData['min_expiry']->format('Y-m-d H:i:s')
     ];
     if ($dbKey === 'session') {
         continue;
@@ -152,7 +169,8 @@ foreach ($usage as $dbKey => &$dbData) {
             'count_keys_human' => number_format($prefixData['count']),
             'size' => $prefixData['size'],
             'size_human' => humanFileSize($prefixData['size']),
-            'last_expiration' => $prefixData['expiry']->format('Y-m-d H:i:s')
+            'last_expiration' => $prefixData['expiry']->format('Y-m-d H:i:s'),
+            'min_expiration' => $prefixData['min_expiry']->format('Y-m-d H:i:s')
         ];
     }
     echo PHP_EOL;
@@ -202,7 +220,8 @@ $html = '<html>
             { name: "count_keys_human", type: "text", width: 150 },
             { name: "size", type: "number", width: 50 },
             { name: "size_human", type: "text", width: 150 },
-            { name: "last_expiration", type: "text", width: 150 }
+            { name: "last_expiration", type: "text", width: 150 },
+            { name: "min_expiration", type: "text", width: 150 }
         ]
     });
 </script>
@@ -223,6 +242,7 @@ function printStatistics($stat) {
 
 
 function extractKey($key) {
+    $key = str_replace(':hash', '', $key);
     $parts = explode(':', $key);
 
     if (count($parts) > 1) {
@@ -237,14 +257,9 @@ function writeln($line) {
     echo $line . PHP_EOL;
 }
 function getPrefix($prefix, $prefixPartsCount) {
-    $parts = explode(':', $prefix);
-
-    if (count($parts) > 1) {
-        $prefix = end($parts);
-    } else {
-        $prefix = $parts[0];
-    }
+    $prefix = extractKey($prefix);
     $parts = explode('_', $prefix);
+    $parts = array_filter($parts);
     $countParts = count($parts);
     if ($countParts < $prefixPartsCount) {
         return implode('_', $parts);
