@@ -340,7 +340,7 @@ function replaceConfigPhp($path) {
     $config = include $filePath;
     $configPatcher = new ConfigPatcher($config);
 
-    $configPatcher->replaceIfExists('system.default.admin.url.use_custom_path', '0');
+    $configPatcher->replaceIfExists('system.default.admin.url.custom_path', 'admin');
     $configPatcher->replaceIfExists('system.default.system.security.max_session_size_admin', '1024000');
 
     $config = $configPatcher->getConfigArray();
@@ -373,6 +373,8 @@ function replaceEnvConfig($path) {
 
     $configPatcher = new ConfigPatcher($config);
     $configPatcher->replaceIfExists('backend.frontName', 'admin');
+
+    $configPatcher->replaceIfExists('system.default.admin.url.custom_path', 'admin');
 
     $db = [
         'host' => 'db',
