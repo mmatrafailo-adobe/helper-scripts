@@ -248,6 +248,8 @@ WHERE c.path IN({$patchWhere})");
     $db->query("UPDATE core_config_data SET value = 'admin' WHERE path = 'admin/url/custom_path'");
     $db->query("UPDATE core_config_data SET value = NULL WHERE path = 'recaptcha_backend/type_for/user_login'");
     $db->query("UPDATE core_config_data SET value = '2' WHERE path = 'system/full_page_cache/caching_application'");
+    $db->query("UPDATE core_config_data SET value = 'varnish' WHERE path = 'system/full_page_cache/varnish/backend_host'");
+    $db->query("UPDATE core_config_data SET value = '80' WHERE path = 'system/full_page_cache/varnish/backend_port'");
 
 
     $magentoVarsContent = "";
@@ -407,6 +409,8 @@ function replaceEnvConfig($path) {
     $configPatcher->replaceIfExists('system.default.smile_elasticsuite_core_base_settings.es_client.servers', 'elasticsearch:9200');
     $configPatcher->replaceIfExists('system.default.catalog.search.elasticsearch7_server_hostname', 'elasticsearch');
     $configPatcher->replaceIfExists('system.default.system.security.max_session_size_admin', '1024000');
+    $configPatcher->replaceIfExists('system.default.system.full_page_cache.varnish.backend_port', '80');
+    $configPatcher->replaceIfExists('system.default.system.full_page_cache.varnish.backend_host', 'varnish');
 
 
     $config = $configPatcher->getConfigArray();
