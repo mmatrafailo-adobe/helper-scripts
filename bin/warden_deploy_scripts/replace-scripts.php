@@ -250,6 +250,8 @@ WHERE c.path IN({$patchWhere})");
     $db->query("UPDATE core_config_data SET value = '2' WHERE path = 'system/full_page_cache/caching_application'");
     $db->query("UPDATE core_config_data SET value = 'varnish' WHERE path = 'system/full_page_cache/varnish/backend_host'");
     $db->query("UPDATE core_config_data SET value = '80' WHERE path = 'system/full_page_cache/varnish/backend_port'");
+    $db->query("UPDATE core_config_data SET value = 'elasticsearch' WHERE path = 'catalog/search/elasticsearch7_server_hostname'");
+    $db->query("UPDATE core_config_data SET value = '9200' WHERE path = 'catalog/search/elasticsearch7_server_port'");
 
 
     $magentoVarsContent = "";
