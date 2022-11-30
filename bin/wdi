@@ -34,7 +34,7 @@ make_phpstorm_dir () {
       <synchronize>true</synchronize>
       <user-name>magento</user-name>
       <jdbc-driver>org.mariadb.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mariadb://${PROJECT_NAME}_db_1:3306/magento</jdbc-url>
+      <jdbc-url>jdbc:mariadb://${PROJECT_NAME}-db-1:3306/magento</jdbc-url>
       <working-dir>\$ProjectFileDir\$</working-dir>
       <ssh-properties>
               <enabled>true</enabled>
@@ -104,9 +104,10 @@ varden_init_env () {
 }
 
 init_project () {
+  mkdir source && cd $_
   make_phpstorm_dir
   varden_init_env
-  cp ${SCRIPT_DIR}/replace-scripts.php ./
+  cp -R ${SCRIPT_DIR}/warden_deploy_scripts ./warden_deploy_scripts
 
   local PHP_VERSION=${1}
   if [ -n "$CLOUD_PROJECT_ID" ]
@@ -121,6 +122,8 @@ init_project () {
         sed -i '' 's/PHP_VERSION=7.4/PHP_VERSION=8.1/g' .env
     fi
   fi
+
+  cd ../
 }
 
 START_TIME_OF_EXECUTION=`date +%s`
@@ -210,7 +213,7 @@ unpack_code () {
   if [ -n "${CODE_FILE}" ]
   then
     echo "Unpacking code..."
-    tar -xzf ${CODE_FILE}
+    tar -xzf ${CODE_FILE} -C ./source
   fi
 }
 
@@ -220,13 +223,15 @@ echo  "$(unpack_code)" &
 # mutagen sync can not be on time so we need fully unpack before up env
 # TODO
 wait
+
+cd source
 warden env up
 
 
 if [ -n "${DATABASE_FILE}" ]
 then
   echo "Importing db dump..."
-  gunzip -c ${DATABASE_FILE} | warden db import
+  gunzip -c ../${DATABASE_FILE} | warden db import
 fi
 
 
@@ -234,31 +239,19 @@ wait
 
 # Replacing env.php and db configs
 
-echo "configuring composer"
-warden env exec -T php-fpm composer config --no-plugins allow-plugins.laminas/laminas-dependency-plugin true
-warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/magento-composer-installer true
-warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/inventory-composer-installer true
-warden env exec -T php-fpm composer config --no-plugins allow-plugins.magento/composer-root-update-plugin true
+warden env exec -T php-fpm chmod -R +x ./warden_deploy_scripts/*
+warden env exec -T php-fpm /bin/sh ./warden_deploy_scripts/composer-deploy.sh
 
-echo "Run dump autoload"
-warden env exec -T php-fpm composer dump-autoload
 
-warden env exec -T php-fpm php replace-scripts.php env
-warden env exec -T php-fpm php replace-scripts.php conf
+warden env exec -T php-fpm php ./warden_deploy_scripts/replace-scripts.php env
+warden env exec -T php-fpm php ./warden_deploy_scripts/replace-scripts.php conf
 
-REPLACE_SCRIPTS_COMMAND=$(warden env exec -T php-fpm php replace-scripts.php db)
+REPLACE_SCRIPTS_COMMAND=$(warden env exec -T php-fpm php ./warden_deploy_scripts/replace-scripts.php db)
 echo "${REPLACE_SCRIPTS_COMMAND}"
 HOSTS_COMMAND=$(echo "${REPLACE_SCRIPTS_COMMAND}" | grep HOSTS_COMMAND | sed -u "s/HOSTS_COMMAND=//g")
 
 
-
-warden env exec -T php-fpm php bin/magento deploy:mode:set developer
-warden env exec -T php-fpm php bin/magento a:c:i
-warden env exec -T php-fpm php bin/magento ca:f
-warden env exec -T php-fpm php bin/magento admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
-warden env exec -T php-fpm php bin/magento mo:di Magento_TwoFactorAuth
-
-
+warden env exec -T php-fpm /bin/sh ./warden_deploy_scripts/magento-deploy.sh
 
 END_TIME_OF_EXECUTION=`date +%s`
 TOTAL_TIME_OF_EXECUTION=$((END_TIME_OF_EXECUTION-START_TIME_OF_EXECUTION))
