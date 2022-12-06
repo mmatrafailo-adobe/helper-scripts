@@ -262,5 +262,7 @@ echo TOTAL time of execution is: $(convertsecs TOTAL_TIME_OF_EXECUTION)
 
 
 echo "https://app.${PROJECT_NAME}.test/"
-echo "cd ${PROJECT_NAME}"
+echo "https://app.${PROJECT_NAME}.test/admin/"
+echo "Login: admin, password: 123123q"
+echo "cd ${PROJECT_NAME}/source"
 eval $HOSTS_COMMAND
