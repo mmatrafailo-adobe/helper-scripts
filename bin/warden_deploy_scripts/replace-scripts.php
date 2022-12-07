@@ -122,7 +122,10 @@ function getConfigsFromEnv($path, $configPaths) {
 
 function createBackupTable(DBConnection $db, $tableName) {
     if ($db->isTableExists($tableName . '_autobackup')) {
-        throw new \Exception('Table ' . $tableName . '_autobackup already exists!');
+        //throw new \Exception('Table ' . $tableName . '_autobackup already exists!');
+        echo 'Table ' . $tableName . '_autobackup already exists! Removing!' . PHP_EOL;
+
+        $db->query('DROP TABLE ' . $tableName . '_autobackup');
     }
     // make dump of original table:
     $db->query('CREATE TABLE '.$tableName.'_autobackup LIKE '.$tableName);
@@ -155,9 +158,7 @@ function replaceDb($path) {
     $envConfig = include $path . '/app/etc/env.php';
     $configPatcher = new ConfigPatcher($envConfig);
 
-
     $db = new DBConnection($envConfig);
-
     // make dump of original table:
     createBackupTable($db, 'core_config_data');
 
@@ -331,8 +332,9 @@ function replaceConfigPhp($path) {
 
     if (is_file($autobackupPath)) {
         echo "\r\n";
-        echo ('Autobackup already exists! I can\'t run ' . $autobackupPath . "\r\n");
-        return;
+        echo ('Autobackup already exists! Reverting back' . $autobackupPath . "\r\n");
+        configRevert($path);
+        //return;
     }
 
     copy($filePath, $autobackupPath);
@@ -362,8 +364,9 @@ function replaceEnvConfig($path) {
 
     if (is_file($autobackupPath)) {
         echo "\r\n";
-        echo ('Autobackup already exists! I can\'t run ' . $autobackupPath . "\r\n");
-        return;
+        echo ('Autobackup already exists! Reverting back ' . $autobackupPath . "\r\n");
+
+        envRevert($path);
     }
 
     copy($envPath, $autobackupPath);
