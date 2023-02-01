@@ -20,6 +20,9 @@ $csvFilePath = __DIR__ .'/memory.csv';
 ```
 
 5. run php redis_memory_analyzer.php.
+```shell
+php -d memory_limit=-1 redis_memory_analyzer.php /path/to/memory.csv
+```
 6. Check output or open stats.html file in browser.
 
 
