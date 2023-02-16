@@ -433,6 +433,14 @@ function replaceEnvConfig($path) {
     unset($config['cache']['frontend']['default']['backend_options']['remote_backend_options']['load_from_slave']);
     unset($config['cache']['frontend']['page_cache']['backend_options']['remote_backend_options']['load_from_slave']);
 
+    foreach ($config['db']['connection'] as $name => &$connectionConfig) {
+        if ($connectionConfig['host'] !== $db['host']) {
+            $connectionConfig['host'] = $db['host'];
+            $connectionConfig['username'] = $db['username'];
+            $connectionConfig['password'] = $db['password'];
+        }
+    }
+
     $config['http_cache_hosts'] = [
         [
           'host' => 'varnish',

@@ -133,6 +133,26 @@ START_TIME_OF_EXECUTION=`date +%s`
 
 SCRIPT_DIR=$(getSourceDirOfScript)
 
+CURRENT_VERSION=$(cat ${SCRIPT_DIR}/../version.txt)
+LAST_VERSION=$(curl -H 'Cache-Control: no-cache, no-store' -m 3 https://raw.githubusercontent.com/npuchko/helper-scripts/master/version.txt)
+
+
+if [ "$CURRENT_VERSION" != "$LAST_VERSION" ]
+  then
+    echo ""
+    echo ""
+    echo -e "Version of checker \033[31m$CURRENT_VERSION\033[0m"
+    echo -e "Latest version is \033[32m$LAST_VERSION\033[0m"
+    echo -e "\033[31m============================================================================================"
+    echo -e "|  The new version available! Please update https://github.com/npuchko/helper-scripts      |"
+    echo -e "|  Just run \033[32mcd $SCRIPT_DIR && git fetch && git pull\033[0m          \033[31m|"
+    echo -e "============================================================================================\033[0m"
+    echo ""
+    echo ""
+  else
+    echo -e "Version of checker \033[32m$CURRENT_VERSION\033[0m"
+fi;
+
 
 
 if [ -z "$1" ]
