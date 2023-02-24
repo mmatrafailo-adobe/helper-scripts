@@ -3,13 +3,14 @@
 1. Have magento-cloud installed and configured with API TOKEN.
 2. Have cloud-teleport installed and configured
 3. Have warden from this repo and branch https://github.com/npuchko/warden-multi-arch/tree/warden_for_mac_m1
-4. Create symlinks to bin files:
+4. Have this repo cloned ```git clone git@github.com:npuchko/helper-scripts.git```
+5. Create symlinks to bin files:
 ```shell
-sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/wdi /usr/local/bin/wdi
-sudo ln -s /Users/npuchko/www/tools/warden-addon/bin/warden-remove /usr/local/bin/warden-remove
+sudo ln -s /path/to/this/repo/cloned/bin/wdi /usr/local/bin/wdi
+sudo ln -s /path/to/this/repo/cloned/bin/warden-remove /usr/local/bin/warden-remove
 
 ```
-5. Install tampermonkey scripts here https://github.com/npuchko/helper-scripts/tree/master/tampermonkey
+6. Install tampermonkey scripts here https://github.com/npuchko/helper-scripts/tree/master/tampermonkey
 
 
 # Usage
