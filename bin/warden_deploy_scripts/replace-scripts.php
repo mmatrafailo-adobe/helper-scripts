@@ -279,11 +279,12 @@ WHERE c.path IN({$patchWhere})");
 
     file_put_contents($path . '/app/etc/env.php', $envContent);
 
-    echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
-    $domains = implode(" ", $uniqueDomains);
-
-    echo 'HOSTS_COMMAND=echo "127.0.0.1 '.$domains.'" | sudo tee -a /etc/hosts';
-    echo PHP_EOL . "=========================" . PHP_EOL;
+    if (!empty($uniqueDomains)) {
+        echo PHP_EOL . PHP_EOL . "=========================" . PHP_EOL;
+        $domains = implode(" ", $uniqueDomains);
+        echo 'HOSTS_COMMAND=echo "127.0.0.1 '.$domains.'" | sudo tee -a /etc/hosts';
+        echo PHP_EOL . "=========================" . PHP_EOL;
+    }
 }
 
 function envRevert ($path)
