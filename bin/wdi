@@ -108,6 +108,7 @@ init_project () {
   make_phpstorm_dir
   varden_init_env
   cp -R ${SCRIPT_DIR}/warden_deploy_scripts ./warden_deploy_scripts
+  cp -R ${SCRIPT_DIR}/.warden ./.warden
 
   local PHP_VERSION=${1}
 
