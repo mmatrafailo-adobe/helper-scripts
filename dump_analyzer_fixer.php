@@ -3,35 +3,54 @@
 declare(strict_types=1);
 
 $filePath = dirname(__DIR__) . '/dump.sql';
-$target = dirname(__DIR__) . '/dump_fixed.sql';
-$leftTable = dirname(__DIR__) . '/dump_ignored.sql';
+$target = dirname(__DIR__) . '/dump_fixed2.sql';
+$leftTable = dirname(__DIR__) . '/dump_ignored2.sql';
 
 $action = $argv[1] ?? 'analyze';
 //$action = 'fix';
 
 
+
 switch ($action) {
     case 'analyze':
+
+        $analyzeFilePath = $argv[2] ?? $filePath;
         echo "STarting analyzing dump \r\n";
-        $data = analyzeDumpsFile($filePath);
+        $data = analyzeDumpsFile($analyzeFilePath);
         echo "TOTAL SIZE: " . humanFileSize($data['total_size']) . "\r\n";
         echo "INSERT SIZE: " . humanFileSize($data['insert_size']) . "\r\n";
 
 
-        foreach ($data['table_sizes'] as $table => $size) {
-            echo '  ' . str_pad($table, 32, ' ', STR_PAD_RIGHT) . humanFileSize($size) . "\r\n";
+        $tables = array_slice($data['table_sizes'], 0, 20);
+        foreach ($tables as $table => $size) {
+            echo '  ' . str_pad($table, 64, ' ', STR_PAD_RIGHT) . humanFileSize($size) . "\r\n";
         }
         break;
 
     case 'fix':
-        processDumps($filePath, $target, ['catalog_data_exporter_products'], $leftTable);
+        processDumps($filePath, $target, ['catalog_data_exporter_products', 'catalog_product_entity_text', 'catalog_data_exporter_product_overrides', 'autoss_record'], $leftTable, ['sales_']);
         break;
+}
+
+function isInsert(string $statement): bool
+{
+    return strpos($statement, 'INSERT INTO ') === 0 ||
+        strpos($statement, 'INSERT IGNORE INTO ') === 0;
+}
+function getTableFromInsertStatement(string $statement): ?string
+{
+    $table = substr($statement, 0, 200);
+    if (preg_match('/INSERT (IGNORE )?INTO `(.*)` /isU', $table, $matches)) {
+        return $matches[2];
+    }
+
+    return null;
 }
 
 
 
 
-function processDumps($inFile, $outFilePath, $ignoreTables, $ignoreFilePath = null) {
+function processDumps($inFile, $outFilePath, $ignoreTables, $ignoreFilePath = null, $ignorePrefixes =[]) {
 
     $in = getFileIterator($inFile);
 
@@ -43,24 +62,28 @@ function processDumps($inFile, $outFilePath, $ignoreTables, $ignoreFilePath = nu
         $ignoreFile = fopen($ignoreFilePath, 'w+');
     }
 
-
-    $placeholders = [];
-
-    foreach ($ignoreTables as $table) {
-        $placeholders[] = "INSERT INTO `{$table}`";
-        $placeholders[] = "INSERT IGNORE INTO `{$table}`";
-    }
-
     foreach ($in as $line) {
         $skip = false;
-        if (strpos($line, 'INSERT ') === 0) {
-            foreach ($placeholders as $placeholder) {
-                if (strpos($line, $placeholder) !== false) {
+
+        if (isInsert($line)) {
+            $tableName = getTableFromInsertStatement($line);
+            if (in_array(
+                $tableName,
+                $ignoreTables
+            )) {
+                $skip = true;
+            }
+
+
+            foreach ($ignorePrefixes as $ignorePrefix) {
+                if (strpos($tableName, $ignorePrefix) === 0) {
                     $skip = true;
                     break;
                 }
             }
         }
+
+
 
 
         if ($skip) {
@@ -142,27 +165,19 @@ function analyzeDumpsFile($filePath) {
 
 
         if (
-            strpos($line, 'INSERT INTO ') === 0 ||
-            strpos($line, 'INSERT IGNORE INTO ') === 0
+            isInsert($line)
 
         ) {
             // INSERT
             $insertSize += $lineSize;
 
-            $table = substr($line, 0, 200);
-            if (preg_match('/INSERT (IGNORE )?INTO `(.*)` /isU',$table, $matches)) {
-
-                $table = $matches[2];
-
+            $table = getTableFromInsertStatement($line);
+            if ($table) {
                 $tableSizes[$table] = $tableSizes[$table] ?? 0;
                 $tableSizes[$table] += $lineSize;
-            }
-
-            else {
+            } else {
                 var_dump($table);
             }
-
-            continue;
         }
 
     }
@@ -187,24 +202,6 @@ function getFileIterator(string $filePath): \Generator
     }
 
     fclose($file);
-}
-class FileIterator {
-    private $filePath;
-
-    private  function __construct($filePath) {
-        $this->filePath = $filePath;
-    }
-
-    public function get(): \Generator
-    {
-        $file = fopen($this->filePath);
-
-        while (($line = fgets($file)) !== false) {
-            yield $line;
-        }
-
-        fclose($file);
-    }
 }
 
 
