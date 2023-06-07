@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.5.0
+// @version      0.6.0
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -35,6 +35,9 @@
             const magentoUrl = 'https://jira.corp.adobe.com/browse/ACSD' + issueNumber.replace('MDVA', '');
             appendUrl('NEW JIRA', magentoUrl);
         }
+
+        appendUrl('Warden env', 'https://app.' + issueNumber.toLowerCase().replace('-', '')  + '.test/');
+        appendUrl('Warden env admin', 'https://app.' + issueNumber.toLowerCase().replace('-', '')  + '.test/admin/');
 
         if (!projectUrl) {
             projectUrl = $j("#customfield_18505-val a").attr("href");
