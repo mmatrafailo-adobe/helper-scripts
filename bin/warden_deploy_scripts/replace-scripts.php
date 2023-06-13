@@ -252,7 +252,9 @@ WHERE c.path IN({$patchWhere})");
     $db->query("UPDATE core_config_data SET value = 'varnish' WHERE path = 'system/full_page_cache/varnish/backend_host'");
     $db->query("UPDATE core_config_data SET value = '80' WHERE path = 'system/full_page_cache/varnish/backend_port'");
     $db->query("UPDATE core_config_data SET value = 'elasticsearch' WHERE path = 'catalog/search/elasticsearch7_server_hostname'");
+    $db->query("UPDATE core_config_data SET value = 'elasticsearch' WHERE path = 'amasty_elastic/connection/server_hostname'");
     $db->query("UPDATE core_config_data SET value = '9200' WHERE path = 'catalog/search/elasticsearch7_server_port'");
+    $db->query("UPDATE core_config_data SET value = '9200' WHERE path = 'amasty_elastic/connection/server_port'");
 
 
     $magentoVarsContent = "";
