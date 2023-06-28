@@ -127,6 +127,11 @@ init_project () {
       sed -i '' 's/PHP_VERSION=7.4/PHP_VERSION=8.1/g' .env
   fi
 
+  if [[ "${PHP_VERSION}" == *"8.2"* || "${PHP_VERSION}" == *"82"* ]]
+    then
+        sed -i '' 's/PHP_VERSION=7.4/PHP_VERSION=8.1/g' .env
+    fi
+
   cd ../
 }
 
