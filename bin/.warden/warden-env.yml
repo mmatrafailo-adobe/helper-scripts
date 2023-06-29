@@ -3,3 +3,7 @@ services:
   nginx:
     volumes:
       - ./.warden/nginx/custom.conf:/etc/nginx/default.d/custom.conf
+
+  varnish:
+    environment:
+      - VARNISHD_PARAMS=-p http_max_hdr=65535 -p default_ttl=3600 -p default_grace=3600 -p feature=+esi_ignore_https -p feature=+esi_disable_xml_check
