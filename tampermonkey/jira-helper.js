@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.6.0
+// @version      0.7.0
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -68,10 +68,14 @@
 
 
         appendToJIRA("MSC command", "msc " + projectId + " " + envId);
+
+        const newCloudUrl = "https://console.magento.cloud/projects/" + projectId + "/" + envId;
+
+        appendUrl("NEW Project Page", newCloudUrl, "#rowForcustomfield_18505");
     }
 
 
-    function appendToJIRA(title, command) {
+    function appendToJIRA(title, command, afterSelector) {
         const fieldsList = $j("#customfield-panel-1 ul.property-list");
 
         const id = "auto_" + makeid(10);
@@ -93,12 +97,16 @@
             "        </div>\n" +
             "    </li>");
 
+        if(afterSelector) {
+            $j("#" + id).insertAfter(afterSelector);
+        }
+
         $j("#" + id).click(function () {
             copyToClipboard(this.value);
         });
     }
 
-    function appendUrl(title, url) {
+    function appendUrl(title, url, afterSelector) {
         const fieldsList = $j("#customfield-panel-1 ul.property-list");
         const id = "auto_" + makeid(10);
 
@@ -119,6 +127,10 @@
             "</a>                            </div>\n" +
             "        </div>\n" +
             "    </li>");
+
+        if (afterSelector) {
+            $j("#" + existingIds.get(title)).insertAfter(afterSelector);
+        }
     }
     function copyToClipboard(str) {
         const el = document.createElement('textarea');  // Create a <textarea> element
