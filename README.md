@@ -127,3 +127,42 @@ CHANGE MASTER TO
 ```
 Use this article to debug if something goes wrong:
 https://mariadb.org/mariadb-replication-using-containers/
+
+9. Configure app/etc/env.php to use slave:
+```php
+<?php
+
+return [
+    
+    'db' => [
+        'connection' => [
+            'default' => [
+                'host' => 'db',
+                'username' => 'magento',
+                'dbname' => 'magento',
+                'password' => 'magento'
+            ],
+            'indexer' => [
+                'host' => 'db',
+                'username' => 'magento',
+                'dbname' => 'magento',
+                'password' => 'magento'
+            ]
+        ],
+
+        'slave_connection' => [ // <------------ this part
+            'default' => [
+                'host' => 'dbslave',
+                'username' => 'root',
+                'dbname' => 'magento',
+                'password' => 'magento',
+                'model' => 'mysql4',
+                'engine' => 'innodb',
+                'initStatements' => 'SET NAMES utf8;',
+                'active' => '1',
+                'synchronous_replication' => true 
+            ]
+        ]
+    ],
+];
+```
