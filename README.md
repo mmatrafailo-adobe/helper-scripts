@@ -106,7 +106,7 @@ warden env up
 gunzip -c ../php81.database.sql.gz |  warden env exec -T dbslave mysql -uroot -pmagento --database=magento
 ```
 
-6. Open mysql console to PRIMARY db and run following:
+6. Open mysql console to PRIMARY db as ROOT user and run following:
 ```mysql
 CREATE USER 'repluser'@'%' IDENTIFIED BY 'replsecret';
 GRANT REPLICATION SLAVE ON *.* TO 'repluser'@'%';
@@ -116,7 +116,7 @@ GRANT REPLICATION SLAVE ON *.* TO 'repluser'@'%';
 ```shell
 warden env exec db cat /etc/hosts | grep mariadb | awk '{print $1}'
 ```
-8. Open mysql console to SLAVE db and run:
+8. Open mysql console to SLAVE as ROOT user  db and run:
 ```mysql
 CHANGE MASTER TO
     MASTER_HOST='<IP GOES HERE>',
@@ -124,6 +124,14 @@ CHANGE MASTER TO
     MASTER_PASSWORD='replsecret',
     MASTER_PORT=3306,
     MASTER_CONNECT_RETRY=10;
+
+START SLAVE;
+```
+
+to check status use:
+```mysql
+show master status; -- on master
+show slave status; -- on slave
 ```
 Use this article to debug if something goes wrong:
 https://mariadb.org/mariadb-replication-using-containers/
