@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.7.0
+// @version      0.8.0
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -14,6 +14,8 @@
 (function($j) {
     'use strict';
     let existingIds = new Map();
+
+    let commentBinded = false;
 
     // subscribe to original jQuery ajax complete
     $ && $(document).ajaxComplete(function () {
@@ -54,6 +56,10 @@
         const parts = projectUrlObj.pathname.split("/");
         let projectId = parts[2] || '';
         let envId = parts[4] || '';
+        let region = projectUrlObj.host.split('.')[0];
+
+
+        let gitCloneCommand = "git clone --branch "+envId+" "+projectId+"@git."+region+".magento.cloud:"+projectId+".git git_repo"
 
         const command = "wdi " + issueNumber + " " + projectId + " " + envId;
 
@@ -63,6 +69,7 @@
         }
 
         appendToJIRA("warden command", command);
+        appendToJIRA("GIT CLONE", gitCloneCommand);
         appendToJIRA("SSH command", "magento-cloud ssh " + magentoCloudCommandParams);
         appendToJIRA("SQL command", "magento-cloud sql " + magentoCloudCommandParams);
 
@@ -72,6 +79,73 @@
         const newCloudUrl = "https://console.magento.cloud/projects/" + projectId + "/" + envId;
 
         appendUrl("NEW Project Page", newCloudUrl, "#rowForcustomfield_18505");
+
+
+
+        let footerCommentButton = $j("#footer-comment-button");
+
+        if (footerCommentButton.length > 0 && !commentBinded) {
+            let footerHandler = function (){
+                setTimeout(function (){
+                    addResolutionTemplate("bottom");
+                }, 300)
+            };
+
+            $j("#footer-comment-button").bind("click", footerHandler);
+            commentBinded = true;
+        }
+
+    }
+
+    function addResolutionTemplate(place) {
+        let container = $j('nav.editor-toggle-tabs ul');
+        let prefixId = 'choosetemplate-' + place;
+        $j("#" + prefixId + '-container').remove();
+        container.append('<li id="'+prefixId+'-container"><select id="'+prefixId+'-select" class="aui-button"><option>---Select template---\n' +
+            '\n' +
+            '</option><option value="full">Full</option> <option value="short">Short</option> </select></li>');
+
+
+        $j("#" + prefixId + '-select').on("change", function (event) {
+            let commentField = $j(event.target).parents('.jira-wikifield').find('#comment');
+
+            let value = commentField.val();
+            if (event.target.value === 'full') {
+                value += "{panel:borderStyle=dashed|borderColor=#cccccc|titleBGColor=#dddddd|bgColor=#deebff}\n" +
+                    "* *Fix summary*\n" +
+                    "  Setting `'persistent' => '1'` in `env.php` no longer throws an error when you run `setup:upgrade`\n" +
+                    "* *Caused by extensions*  \n" +
+                    "  Vendor_Extension - 1.34.1\n" +
+                    "  app/code/Vendor/Extension/Observer/CustomObserver.php\n" +
+                    "* *Issue identification*\n" +
+                    "  *Log path:*\n" +
+                    "    var/log/system.log\n" +
+                    "  *Log message:*\n" +
+                    "   {code}\n" +
+                    "[2022-06-08T13:55:50.858649+00:00] report.ERROR: Magento\\Framework\\GraphQl\\Exception\\GraphQlInputException: \"postcode\" is required. Enter and try again. in /app/ef2udrg5x6pka/vendor/magento/app/code/Magento/QuoteGraphQl/Model/Cart/SetBillingAddressOnCart.php:182\n" +
+                    "   {code}\n" +
+                    "  *Config settings:* \n" +
+                    "    carriers/fedex/active = 1\n" +
+                    "* *Documentation Link*\n" +
+                    "https://experienceleague.adobe.com/docs/commerce-admin/config/catalog/inventory.html?lang=en\n" +
+                    "{panel}";
+            } else {
+                value += "{panel:borderStyle=dashed|borderColor=#cccccc|titleBGColor=#dddddd|bgColor=#deebff}\n" +
+                    "* *Fix summary*\n" +
+                    "  SUMMARY HERE\n" +
+                    "* *Caused by extensions*  \n" +
+                    "  N/A\n" +
+                    "* *Issue identification*\n" +
+                    "  N/A\n" +
+                    "* *Documentation Link*\n" +
+                    "  N/A\n" +
+                    "{panel}";
+            }
+
+            commentField.val(value);
+            commentField.css('height', '500px');
+
+        })
     }
 
 
