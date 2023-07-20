@@ -54,12 +54,27 @@
 
         const projectUrlObj = new URL(projectUrl);
         const parts = projectUrlObj.pathname.split("/");
-        let projectId = parts[2] || '';
-        let envId = parts[4] || '';
-        let region = projectUrlObj.host.split('.')[0];
+        let projectId, envId, region
+        if (projectUrl.includes("console.magento.cloud")) {
+            projectId = parts[2] || '';
+            envId = parts[3] || '';
+            region = '';
+        } else {
+            projectId = parts[2] || '';
+            envId = parts[4] || '';
+            region = projectUrlObj.host.split('.')[0];
+        }
 
 
-        let gitCloneCommand = "git clone --branch "+envId+" "+projectId+"@git."+region+".magento.cloud:"+projectId+".git git_repo"
+        let branch = envId ? '--branch ' + envId : '';
+        let gitCloneCommand = "git clone "+branch+" "+projectId+"@git."+region+".magento.cloud:"+projectId+".git git_repo"+envId.toLowerCase().replace('-', '');
+
+        if (projectUrl.includes("console.magento.cloud")) {
+            gitCloneCommand = 'magento-cloud get ' + projectId
+            if (envId) {
+                gitCloneCommand += ' -e ' + envId;
+            }
+        }
 
         const command = "wdi " + issueNumber + " " + projectId + " " + envId;
 
