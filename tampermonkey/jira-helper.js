@@ -27,6 +27,7 @@
         let issueNumber = $j("#key-val").text();
         let projectUrl = $j("#customfield_14217-val a").attr("href");
         let currentUrl = document.location.href;
+        let envType = $j("#customfield_17502-val").text().trim().toLowerCase();
 
         if (currentUrl.indexOf('corp.adobe.com') !== -1 && currentUrl.indexOf('/ACSD-') !== -1) {
             const magentoUrl = 'https://jira.corp.magento.com/browse/MDVA' + issueNumber.replace('ACSD', '');
@@ -57,11 +58,11 @@
         let projectId, envId, region
         if (projectUrl.includes("console.magento.cloud")) {
             projectId = parts[2] || '';
-            envId = parts[3] || '';
+            envId = parts[3] || envType;
             region = '';
         } else {
             projectId = parts[2] || '';
-            envId = parts[4] || '';
+            envId = parts[4] || envType;
             region = projectUrlObj.host.split('.')[0];
         }
 
@@ -254,4 +255,3 @@
 
 
 })(window.jQuery.noConflict(true));
-
