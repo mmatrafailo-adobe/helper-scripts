@@ -84,6 +84,8 @@
             magentoCloudCommandParams += " -e " + envId;
         }
 
+        appendUrl("File Manager","https://repo.pltfrm.sh/magento/" + projectId);
+
         appendToJIRA("warden command", command);
         appendToJIRA("GIT CLONE", gitCloneCommand);
         appendToJIRA("SSH command", "magento-cloud ssh " + magentoCloudCommandParams);
