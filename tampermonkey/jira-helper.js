@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JIRA Commands Display
 // @namespace    https://adobe.com
-// @version      0.8.0
+// @version      0.8.1
 // @description  Add magento cloud cli commands into jira under project url
 // @author       You
 // @match        https://jira.corp.magento.com/browse/*
@@ -68,7 +68,7 @@
 
 
         let branch = envId ? '--branch ' + envId : '';
-        let gitCloneCommand = "git clone "+branch+" "+projectId+"@git."+region+".magento.cloud:"+projectId+".git git_repo"+envId.toLowerCase().replace('-', '');
+        let gitCloneCommand = "git clone "+branch+" "+projectId+"@git."+region+".magento.cloud:"+projectId+".git git_repo"+envId.toLowerCase().replace('-', '') + issueNumber;
 
         if (projectUrl.includes("console.magento.cloud")) {
             gitCloneCommand = 'magento-cloud get ' + projectId
