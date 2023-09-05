@@ -260,17 +260,20 @@ warden env up
 if [ -n "${DATABASE_FILE}" ]
 then
   echo "[" $(date -u) "Importing db dump..."
+  echo -e "\033[31m"
 
   gunzip -cf ../${DATABASE_FILE} | sed -e 's/DEFINER[ ]*=[ ]*[^*]*\*/\*/' \
           | sed -e 's/TRIGGER[ ][`][A-Za-z0-9_]*[`][.]/TRIGGER /' \
           | sed -e 's/utf8mb4_0900_ai_ci/utf8_general_ci/' \
           | sed -e 's/utf8mb4_unicode_ci/utf8_general_ci/' \
+          | sed -e 's/utf8mb4_unicode_520_ci/utf8_general_ci/' \
           | sed -e 's/CHARSET=utf8mb4/CHARSET=utf8/g' \
           | sed -e 's/AFTER[ ]\(INSERT\)\{0,1\}\(UPDATE\)\{0,1\}\(DELETE\)\{0,1\}[ ]ON[ ][`][A-Za-z0-9_]*[`][.]/AFTER \1\2\3 ON /' \
           | grep -v 'mysqldump: Couldn.t find table' | grep -v 'mysqldump: Couldn.t execute' | grep -v 'Warning: Using a password' \
           | grep -v 'mysqldump: ' | grep -v 'ALTER DATABASE' \
           | warden db import
 
+  echo -e "\033[0m"
   echo "[" $(date -u) "Import of db dump finished"
 fi
 

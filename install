@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-META_PACKAGE=magento/project-community-edition META_VERSION=2.4.x
+META_PACKAGE=magento/project-commerce-edition META_VERSION=2.4.7-beta1
 
 composer create-project --repository-url=https://repo.magento.com/ \
     "${META_PACKAGE}" /tmp/exampleproject "${META_VERSION}"
