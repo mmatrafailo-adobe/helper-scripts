@@ -25,11 +25,23 @@ make_phpstorm_dir () {
   UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
   SSH_UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
 
+  PROD_UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+  PROD_SSH_UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+
+  local host=$(echo "${DATABASE_CONNECTION_DATA}" | grep host | sed -u "s/host: //g")
+  local port=$(echo "${DATABASE_CONNECTION_DATA}" | grep port | sed -u "s/port: //g"| sed -u "s/'//g")
+  PROD_DB_USERNAME=$(echo "${DATABASE_CONNECTION_DATA}" | grep username | sed -u "s/username: //g")
+  local password=$(echo "${DATABASE_CONNECTION_DATA}" | grep password | sed -u "s/password: //g")
+
+  echo -e "ssh: ${SSH_HOST}\nhost: ${host}\nport: ${port}\nusername: ${PROD_DB_USERNAME}\npassword: ${password}\n" > production_db_access_data.txt
+  echo -e "ssh: user@tunnel.warden.test:2222\nhost: ${PROJECT_NAME}-db-1\nport: 3306\nusername: magento\npassword: magento\n" > local_db_access_data.txt
+
   cat  << EOF > .idea/dataSources.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="magento@${PROJECT_NAME}_db_1" uuid="${UUID}">
+    <data-source source="LOCAL" name="LOCAL_magento@${PROJECT_NAME}_db_1" uuid="${UUID}">
       <driver-ref>mariadb</driver-ref>
       <synchronize>true</synchronize>
       <user-name>magento</user-name>
@@ -41,6 +53,18 @@ make_phpstorm_dir () {
               <ssh-config-id>${SSH_UUID}</ssh-config-id>
             </ssh-properties>
     </data-source>
+    <data-source source="LOCAL" name="PRODUCTION_magento@${PROJECT_NAME}" uuid="${PROD_UUID}">
+          <driver-ref>mariadb</driver-ref>
+          <synchronize>true</synchronize>
+          <user-name>${PROD_DB_USERNAME}</user-name>
+          <jdbc-driver>org.mariadb.jdbc.Driver</jdbc-driver>
+          <jdbc-url>jdbc:mariadb://${host}:${port}/magento</jdbc-url>
+          <working-dir>\$ProjectFileDir\$</working-dir>
+          <ssh-properties>
+                  <enabled>true</enabled>
+                  <ssh-config-id>${PROD_SSH_UUID}</ssh-config-id>
+                </ssh-properties>
+        </data-source>
   </component>
 </project>
 EOF
@@ -51,6 +75,7 @@ EOF
   <component name="SshConfigs">
     <configs>
       <sshConfig authType="OPEN_SSH" host="tunnel.warden.test" id="${SSH_UUID}" port="2222" nameFormat="DESCRIPTIVE" username="user" useOpenSSHConfig="true" />
+      <sshConfig authType="OPEN_SSH" host="${SSH_HOST}" id="${PROD_SSH_UUID}" port="22" nameFormat="DESCRIPTIVE" username="user" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>
@@ -104,7 +129,8 @@ varden_init_env () {
 }
 
 init_project () {
-  mkdir source && cd $_
+  mkdir source
+  cd source
   make_phpstorm_dir
   varden_init_env
   cp -R ${SCRIPT_DIR}/warden_deploy_scripts ./warden_deploy_scripts
@@ -209,6 +235,8 @@ fi
 
 echo "Project name is ${PROJECT_NAME}"
 
+DATABASE_CONNECTION_DATA=""
+SSH_HOST=""
 if [ -z "$CLOUD_PROJECT_ID" ]
 then
       echo "project id not specified. Try to find php*.code.tar.gz in this dir"
@@ -221,12 +249,15 @@ else
 
       PHP_VERSION=$(magento-cloud app:list -p $CLOUD_PROJECT_ID -e $CLOUD_ENV_ID --columns Type --format plain --no-header)
       echo "Detected php version is ${PHP_VERSION}"
+
+      DATABASE_CONNECTION_DATA=$(magento-cloud environment:relationships  -p $CLOUD_PROJECT_ID -e $CLOUD_ENV_ID --property database.0)
+      echo "Database connection data ${DATABASE_CONNECTION_DATA}"
+
 fi
 
 
 # output only after full result
 echo "$(init_project ${PHP_VERSION})" &
-
 
 if [ -n "$CLOUD_PROJECT_ID" ]
 then

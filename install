@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-META_PACKAGE=magento/project-commerce-edition META_VERSION=2.4.7-beta1
+META_PACKAGE=magento/project-enterprise-edition META_VERSION=2.4.6-p2
 
 composer create-project --repository-url=https://repo.magento.com/ \
     "${META_PACKAGE}" /tmp/exampleproject "${META_VERSION}"
@@ -68,5 +68,5 @@ bin/magento indexer:reindex
 bin/magento cache:flush
 
 
-m admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
-m mo:di Magento_TwoFactorAuth
+bin/magento admin:user:create --admin-user admin --admin-password 123123q --admin-email admin@example.com --admin-firstname admf --admin-lastname adml
+bin/magento mo:di Magento_AdminAdobeImsTwoFactorAuth Magento_TwoFactorAuth
