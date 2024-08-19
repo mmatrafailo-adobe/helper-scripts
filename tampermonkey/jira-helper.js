@@ -113,6 +113,7 @@
             commentBinded = true;
         }
 
+        addFindingsTemplate();
     }
 
     function addResolutionTemplate(place) {
@@ -253,6 +254,29 @@
                 charactersLength));
         }
         return result;
+    }
+
+    function addFindingsTemplate() {
+        let findingsTextArea = $j("#customfield_27305");
+        if (findingsTextArea.length && window.findingsLinkAdded == undefined) {
+            const findingsDescription = $j("#customfield_27305-description");
+            const insertTemplateLink = '<a href="#" id="insert-findings">Insert Findings Template</a><br>';
+            const template = `{panel:borderStyle=dashed|borderColor=#cccccc|titleBGColor=#dddddd|bgColor=#deebff}
+* *What is the issue? What happened?*
+  [It should be a brief overview what we investigated.]
+* *What is the root cause?*
+  [add as many details as possible here about the root cause]
+* *What are the recommendations?*
+  [Put the recommendation that we sent to the customer here. ]
+{panel}`;
+
+            findingsDescription.find('a').before(insertTemplateLink);
+            window.findingsLinkAdded = true;
+            $j("#insert-findings").click(function () {
+                findingsTextArea.text(template);
+                findingsTextArea.trigger('keyup');
+            });
+        }
     }
 
 
