@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         JIRA Commands Display
+// @name         JIRA Helper
 // @namespace    https://adobe.com
 // @version      0.8.1
 // @description  Add magento cloud cli commands into jira under project url
@@ -273,8 +273,11 @@
             findingsDescription.find('a').before(insertTemplateLink);
             window.findingsLinkAdded = true;
             $j("#insert-findings").click(function () {
-                findingsTextArea.text(template);
-                findingsTextArea.trigger('keyup');
+                $j(findingsTextArea.closest('.field-group').find('.aui-nav button').get(1)).click();
+                findingsTextArea.val(template);
+                const event = $j.Event( 'keydown', { which: $.ui.keyCode.ENTER } );
+
+                findingsTextArea.trigger(event);
             });
         }
     }
